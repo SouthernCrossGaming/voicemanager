@@ -34,7 +34,7 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
 
     for (DecodedChunk decoded : m_vecDecodedChunks)
     {
-        EncodedChunk encoded = OpusCompress(decoded);
+        EncodedChunk encoded = OpusEncode(decoded);
         if (encoded.size <= 0)
         {
             return originalVoiceData;
@@ -95,6 +95,7 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
     uint32_t iSteamCommunity = *((uint32_t*)&bytes[pos]);
     pos += 4;
 
+    // What was this for, bot detection?
     if (iSteamCommunity != 0x1100001)
     {
         return;
@@ -124,7 +125,7 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
 
             break;
         }
-        case 6: // Opus??
+        case 6: // Opus
         {
             if (pos + 2 > dataLen)
             {
@@ -160,7 +161,7 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
 
                 encodedChunk.data = &bytes[tpos];
 
-                DecodedChunk decodedChunk = this->OpusDecompress(encodedChunk);
+                DecodedChunk decodedChunk = this->OpusDecode(encodedChunk);
                 if (decodedChunk.samples <= 0)
                 {
                     return;
@@ -172,14 +173,7 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
         }
         case 0: // Silence
         {
-            // smutils->LogError(myself, "Encountered silence payload");
             return;
-            // uint16_t numSamples = *((uint16_t *)&bytes[pos]);
-            // int freeSamples = (sizeof(m_decodeBuffer) / sizeof(float)) - numDecompressedSamples;
-            // numSamples = MIN(freeSamples, numSamples);
-            // memset(&m_decodeBuffer[numDecompressedSamples], 0, numSamples * sizeof(float));
-            // numDecompressedSamples += numSamples;
-            // return numDecompressedSamples;
         }
         }
     }
@@ -200,34 +194,6 @@ bool VoiceManager::ConfigureEncoder()
         smutils->LogError(myself, "Something went wrong with initing opus encoder ctl signal: %i", err);
         return false;
     }
-
-    // err = opus_encoder_ctl(m_Opus_Encoder, OPUS_SET_PREDICTION_DISABLED(1));
-    // if (err < 0)
-    // {
-    //     smutils->LogError(myself, "Something went wrong with initing opus encoder ctl prediction disabled: %i", err);
-    //     return false;
-    // }
-
-    // err = opus_encoder_ctl(m_Opus_Encoder, OPUS_SET_PHASE_INVERSION_DISABLED(1));
-    // if (err < 0)
-    // {
-    //     smutils->LogError(myself, "Something went wrong with initing opus encoder ctl inverstion disabled: %i", err);
-    //     return false;
-    // }
-
-    // err = opus_encoder_ctl(m_Opus_Encoder, OPUS_SET_INBAND_FEC(1));
-    // if (err < 0)
-    // {
-    //     smutils->LogError(myself, "Something went wrong with initing opus encoder ctl fec: %i", err);
-    //     return false;
-    // }
-
-    // err = opus_encoder_ctl(m_Opus_Encoder, OPUS_SET_PACKET_LOSS_PERC(50));
-    // if (err < 0)
-    // {
-    //     smutils->LogError(myself, "Something went wrong with initing opus encoder ctl fec: %i", err);
-    //     return false;
-    // }
 
     err = opus_encoder_ctl(m_Opus_Encoder, OPUS_SET_BANDWIDTH(OPUS_BANDWIDTH_SUPERWIDEBAND));
     if (err < 0)
@@ -296,13 +262,6 @@ bool VoiceManager::InitOpusDecoder(opus_int32 rate)
 
 bool VoiceManager::ConfigureDecoder()
 {
-    // int err = opus_decoder_ctl(m_Opus_Decoder, OPUS_SET_SIGNAL(OPUS_SIGNAL_MUSIC));
-    // if (err < 0)
-    // {
-    //     smutils->LogError(myself, "Something went wrong with initing opus decoder signal: %i", err);
-    //     return false;
-    // }
-
     int err = opus_decoder_ctl(m_Opus_Decoder, OPUS_SET_GAIN(m_gain));
     if (err < 0)
     {
@@ -313,7 +272,7 @@ bool VoiceManager::ConfigureDecoder()
     return true;
 }
 
-EncodedChunk VoiceManager::OpusCompress(DecodedChunk decoded)
+EncodedChunk VoiceManager::OpusEncode(DecodedChunk decoded)
 {
     EncodedChunk encoded;
     encoded.index = decoded.index;
@@ -327,49 +286,20 @@ EncodedChunk VoiceManager::OpusCompress(DecodedChunk decoded)
 
     encoded.size = compressedBytes;
 
-    // if (CvarVoiceManagerEnableDebugLogs.GetBool())
-    // {
-    //     PrintPacketDetails("[NEW CHUNK]", encoded);
-    // }
-
     return encoded;
 }
 
-DecodedChunk VoiceManager::OpusDecompress(EncodedChunk encoded)
+DecodedChunk VoiceManager::OpusDecode(EncodedChunk encoded)
 {
     DecodedChunk decoded;
     decoded.index = encoded.index;
     decoded.data = new opus_int16[MAX_FRAMEBUFFER_SAMPLES]();
 
-    // InitOpusDecoder(m_SampleRate);
-
-    // if (CvarVoiceManagerEnableDebugLogs.GetBool())
-    // {
-    //     PrintPacketDetails("[CHUNK]", encoded);
-    // }
-
-    // int err = opus_packet_unpad(encoded.data, encoded.size);
-    // if (err < 0)
-    // {
-    //     smutils->LogError(myself, "Failed to remove padding from packet: %s", ErrorToString(err));
-    // }
-
-    // why crash :<
     int samples = opus_decode(m_Opus_Decoder, encoded.data, encoded.size, decoded.data, MAX_FRAMEBUFFER_SAMPLES, 0);
     if (samples < 0)
     {
         smutils->LogError(myself, "Opus Decoder Failed: %s", ErrorToString(samples));
     }
-
-    // opus_int32 g = 1000;
-    // opus_val32 gain;
-    // gain = celt_exp2(MULT16_16_P15(QCONST16(6.48814081e-4f, 25), g));
-    // for (int i=0; i < MAX_FRAMEBUFFER_SAMPLES; i++)
-    // {
-    //     opus_val32 x;
-    //     x = MULT16_32_P16(decoded.data[i],gain);
-    //     decoded.data[i] = SATURATE(x, 32767);
-    // }
 
     decoded.samples = samples;
 

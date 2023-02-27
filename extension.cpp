@@ -1,53 +1,10 @@
-/**
- * vim: set ts=4 :
- * =============================================================================
- * SourceMod Sample Extension
- * Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
- * =============================================================================
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, version 3.0, as published by the
- * Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * As a special exception, AlliedModders LLC gives you permission to link the
- * code of this program (as well as its derivative works) to "Half-Life 2," the
- * "Source Engine," the "SourcePawn JIT," and any Game MODs that run on software
- * by the Valve Corporation.  You must obey the GNU General Public License in
- * all respects for all other code used.  Additionally, AlliedModders LLC grants
- * this exception to all derivative works.  AlliedModders LLC defines further
- * exceptions, found in LICENSE.txt (as of this writing, version JULY-31-2007),
- * or <http://www.sourcemod.net/license.php>.
- *
- * Version: $Id$
- */
-
- // #include "smsdk_ext.h"
-#include "defines.h"
 #include "extension.h"
-#include "CDetour/detours.h"
-// #include <iserver.h>
-// #include "include/dirent.h"
-
-#include <iclient.h>
 #include "inetmessage.h"
-#include <iserver.h>
-#include <IBinTools.h>
-#include <ISDKTools.h>
 
 DECL_DETOUR(SV_BroadcastVoiceData);
 
-VoiceManagerExt g_VoiceManager; /**< Global singleton for extension's main interface */
+VoiceManagerExt g_VoiceManager; // Global singleton for extension's main interface
 IGameConfig* g_pGameConf = nullptr;
-
-// IServer *sv = NULL;
 
 class CGameClient;
 class CFrameSnapshot;
@@ -58,12 +15,6 @@ IBinTools* g_pBinTools = nullptr;
 ISDKTools* g_pSDKTools = nullptr;
 IServer* g_pServer = nullptr;
 
-// CGlobalVars *gpGlobals = NULL;
-// ICvar *icvar = NULL;
-// ConVar CvarVoiceManagerEnable("vm_enable", "1", FCVAR_NONE, "Enable Voice Manager");
-// ConVar CvarVoiceManagerEnableDebugLogs("vm_debug", "0", FCVAR_NONE, "Enable Voice Manager Debug Logs");
-
-// int sampleNum = 0;
 struct VoiceOverride
 {
     std::vector<int> clients;
@@ -92,30 +43,25 @@ void SendVoiceDataMsg(int fromClient, int toClient, uint8_t* data, int nBytes, i
 DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
     int nBytesOut;
-
     int fromClient = playerhelpers->GetClientOfUserId(pClient->GetUserID());
-    // auto name = playerhelpers->GetGamePlayer(clientId)->GetName();
-    // int64_t steamId = playerhelpers->GetGamePlayer(clientId)->GetSteamId64();
-
-    auto override = g_activeOverrides.find(fromClient);
 
     // If there are no active overrides for this user, just broadcast the original data
+    auto override = g_activeOverrides.find(fromClient);
     if (override == g_activeOverrides.end())
     {
         DETOUR_STATIC_CALL(SV_BroadcastVoiceData)(pClient, nBytes, data, xuid);
         return;
     }
 
-    std::map<int, int> overridingClients;
-
     // Iterate over each volume level to determine if it has clients requesting it
+    std::map<int, int> overridingClients;
     for (int i = 0; i < MAX_LEVELS; i++)
     {
         // If the level has one or more clients requesting it, we need to re-encode the data at the specified level
         if (override->second[i].clients.size() > 0)
         {
-            // WHY AREN"T WE KEEPING STATE, it makes things shitty quality
             VoiceManager* vm = g_voiceManagerClientStates[override->first].GetVoiceManager(i);
+
             uint8_t* newVoiceData = vm->OnBroadcastVoiceData(pClient, nBytes, data, &nBytesOut);
 
             // Call CGameClient::SendNetMsg for each overriding client
@@ -228,8 +174,6 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
     int adjusted = params[2];
     int volume = params[3];
 
-    smutils->LogError(myself, "We called the native: %i | %i | %i", adjuster, adjusted, volume);
-
     int64_t adjusterSteamId = GetClientSteamId(adjuster);
     int64_t adjustedSteamId = GetClientSteamId(adjusted);
     if (adjusterSteamId <= 0 || adjustedSteamId <= 0)
@@ -247,17 +191,15 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
         {
             return true;
         }
-        else
-        {
-            auto existingOverrides = playerAdjusted->second;
 
-            for (int i = 0; i < existingOverrides.size(); i++)
+        auto existingOverrides = playerAdjusted->second;
+
+        for (int i = 0; i < existingOverrides.size(); i++)
+        {
+            if (existingOverrides.at(i).steamId == adjustedSteamId)
             {
-                if (existingOverrides.at(i).steamId == adjustedSteamId)
-                {
-                    playerAdjusted->second.erase(playerAdjusted->second.begin() + i);
-                    break;
-                }
+                playerAdjusted->second.erase(playerAdjusted->second.begin() + i);
+                break;
             }
         }
     }
@@ -314,20 +256,6 @@ void VoiceManagerExt::SDK_OnAllLoaded()
     g_pServer = g_pSDKTools->GetIServer();
 }
 
-bool VoiceManagerExt::SDK_OnMetaModLoad(ISmmAPI* ismm, char* error, size_t maxlen, bool late)
-{
-    // gpGlobals = ismm->GetCGlobals();
-
-    // GET_V_IFACE_CURRENT(GetEngineFactory, icvar, ICvar, CVAR_INTERFACE_VERSION);
-
-    // g_pCVar = icvar;
-
-    // smutils->LogError(myself, "Registering convar In SDK_OnMetaModLoad");
-    // ConVar_Register(0, this);
-
-    return true;
-}
-
 bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 {
     sharesys->AddDependency(myself, "sdktools.ext", true, true);
@@ -357,134 +285,8 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
     return true;
 }
 
-void DoTranscriptionThing()
-{
-    char buffer[2056];
-
-
-    smutils->LogError(myself, "Transcription Output: %s", buffer);
-}
-
-// void VoiceManager::DoTheThing()
-// {
-// struct dirent *entry = nullptr;
-// DIR *dp = nullptr;
-
-// std::vector<DecodedChunk> combinedDecodedChunks = std::vector<DecodedChunk>();
-
-// dp = opendir("samples\\compressed");
-// if (dp != nullptr)
-// {
-//     while ((entry = readdir(dp)))
-//     {
-//         std::string dirName = std::string(entry->d_name);
-//         if (dirName.find(".wav") != std::string::npos)
-//         {
-//             char filepath[64];
-//             sprintf(filepath, "samples\\compressed\\%s", entry->d_name);
-//             std::ifstream stream(filepath, std::ios::binary | std::ios::ate);
-//             int filesize = 0;
-//             filesize = stream.tellg();
-//             stream.seekg(0, std::ios::beg);
-
-//             uint8_t* buf = new uint8_t[filesize]();
-//             stream.read((char*) buf, filesize);
-//             stream.close();
-
-//             smutils->LogError(myself, "File %s : %i bytes", entry->d_name, filesize);
-//             ParseSteamVoicePacket(buf, filesize);
-
-//             for (auto chunk : m_vecDecodedChunks)
-//             {
-//                 combinedDecodedChunks.push_back(chunk);
-//             }
-
-//             m_vecDecodedChunks.clear();
-//             stream.close();
-//             // VoiceManager::PrintBytes(entry->d_name, filesize, buf);
-//         }
-//     }
-// }
-
-// closedir(dp);
-
-// int totalSamples = 0;
-// for (auto chunk : combinedDecodedChunks)
-// {
-//     totalSamples += chunk.samples;
-// }
-
-// smutils->LogError(myself, "Total Samples: %i", totalSamples);
-
-// int16_t* combinedSamples = new int16_t[totalSamples]();
-
-// int offset = 0;
-// for (auto chunk : combinedDecodedChunks)
-// {
-//     smutils->LogError(myself, "Offset: %i", offset);
-//     std::copy(chunk.data, chunk.data + chunk.samples, &combinedSamples[offset]);
-//     offset += chunk.samples;
-// }
-
-// smutils->LogError(myself, "Here 1");
-
-// writeWAVData("samples\\decompressed\\merged_1.wav", combinedSamples, totalSamples * sizeof(int16_t), 24000, 1);
-// std::vector<EncodedChunk> encodedChunks = std::vector<EncodedChunk>();
-
-// smutils->LogError(myself, "Here 2");
-
-// InitOpusEncoder(m_SampleRate);
-// for (auto chunk : combinedDecodedChunks)
-// {
-//     EncodedChunk eChunk = OpusCompress(chunk);
-//     encodedChunks.push_back(eChunk);
-// }
-
-// smutils->LogError(myself, "Here 3");
-
-// combinedDecodedChunks.clear();
-// smutils->LogError(myself, "Here 4");
-
-// for (auto chunk : encodedChunks)
-// {
-//     DecodedChunk dChunk = OpusDecompress(chunk, false);
-//     combinedDecodedChunks.push_back(dChunk);
-// }
-
-// smutils->LogError(myself, "Here 5");
-
-// // Decode round 2
-// totalSamples = 0;
-// for (auto chunk : combinedDecodedChunks)
-// {
-//     totalSamples += chunk.samples;
-// }
-
-// smutils->LogError(myself, "Total Samples: %i", totalSamples);
-
-// combinedSamples = new int16_t[totalSamples]();
-
-// offset = 0;
-// for (auto chunk : combinedDecodedChunks)
-// {
-//     smutils->LogError(myself, "Offset: %i", offset);
-//     std::copy(chunk.data, chunk.data + chunk.samples, &combinedSamples[offset]);
-//     offset += chunk.samples;
-// }
-
-// writeWAVData("samples\\decompressed\\merged_2.wav", combinedSamples, totalSamples * sizeof(int16_t), 24000, 1);
-// }
-
 bool VoiceManagerExt::RegisterConCommandBase(ConCommandBase* pCommand)
 {
     META_REGCVAR(pCommand);
     return true;
-}
-
-void VoiceManagerExt::OnServerActivate(edict_t* pEdictList, int edictCount, int clientMax)
-{
-    // g_pServer = g_pSDKTools->GetIServer();
-    // if (!g_pServer) {
-    //     smutils->LogError(myself, "IServer not found");
-    // }
 }
