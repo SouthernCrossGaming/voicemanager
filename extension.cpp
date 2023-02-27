@@ -31,7 +31,7 @@ void SendVoiceDataMsg(int fromClient, int toClient, uint8_t* data, int nBytes, i
     if (pToClient != NULL && pToClient->IsConnected() && !pToClient->IsFakeClient())
     {
         SVC_VoiceData msg;
-        msg.m_bProximity = true;
+        msg.m_bProximity = false;
         msg.m_nLength = nBytes * 8;
         msg.m_xuid = xuid;
         msg.m_nFromClient = fromClient - 1; // 1 is added to this on the server side when reading the message, idk
@@ -43,7 +43,8 @@ void SendVoiceDataMsg(int fromClient, int toClient, uint8_t* data, int nBytes, i
 DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
     int nBytesOut;
-    int fromClient = playerhelpers->GetClientOfUserId(pClient->GetUserID());
+    int fromClient = pClient->GetPlayerSlot() + 1;
+    // int fromClient = playerhelpers->GetClientOfUserId(pClient->GetUserID());
 
     // If there are no active overrides for this user, just broadcast the original data
     auto override = g_activeOverrides.find(fromClient);
@@ -55,7 +56,7 @@ DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes,
 
     // Iterate over each volume level to determine if it has clients requesting it
     std::map<int, int> overridingClients;
-    for (int i = 0; i < MAX_LEVELS; i++)
+    for (int i = 0; i < MAX_LEVELS - 1; i++)
     {
         // If the level has one or more clients requesting it, we need to re-encode the data at the specified level
         if (override->second[i].clients.size() > 0)
@@ -67,20 +68,39 @@ DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes,
             // Call CGameClient::SendNetMsg for each overriding client
             for (int client : override->second[i].clients)
             {
+
+                // ALSO: check IsHearingClient here.
                 SendVoiceDataMsg(fromClient, client, newVoiceData, nBytesOut, xuid);
                 overridingClients.insert(std::pair<int, int>(client, override->first));
             }
         }
     }
 
-    int clientCount = g_pServer->GetClientCount();
-    for (int client = 1; client < clientCount; client++)
+    for (int client = 1; client <= playerhelpers->GetMaxClients(); client++)
     {
         if (overridingClients.find(client) != overridingClients.end())
+        {
+            smutils->LogError(myself, "Client %i has an override, skipping.", client);
+            continue;
+        }
+
+        IGamePlayer* pPlayer = playerhelpers->GetGamePlayer(client);
+        if (!pPlayer->IsConnected() || pPlayer->IsFakeClient() || pPlayer->IsSourceTV() || pPlayer->IsReplay())
         {
             continue;
         }
 
+        // TODO: This GetClient might be redundant with GetGamePlayer and the one in SendVoiceDataMsg
+        IClient* pToClient = g_pServer->GetClient(client - 1);
+        if (pToClient == nullptr || !pToClient->IsHearingClient(fromClient - 1))
+        {
+            smutils->LogError(myself, "name of pToClient is %s", pToClient->GetClientName());
+            smutils->LogError(myself, "client %i is not hearing client %i. Skipping", client, fromClient);
+            continue;
+        }
+
+        smutils->LogError(myself, "name of pToClient is %s", pToClient->GetClientName());
+        smutils->LogError(myself, "Sending to client %i", client);
         SendVoiceDataMsg(fromClient, client, data, nBytes, xuid);
     }
 }
@@ -143,7 +163,7 @@ void RefreshActiveOverrides()
             if (newActiveOverride == newActiveOverrides.end())
             {
                 auto overrideLevels = std::map<int, VoiceOverride>();
-                for (int i = 0; i < MAX_LEVELS; i++)
+                for (int i = 0; i < MAX_LEVELS - 1; i++)
                 {
                     VoiceOverride vo;
                     vo.clients = std::vector<int>();
@@ -267,7 +287,9 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
     if (!gameconfs->LoadGameConfigFile("voicemanager", &g_pGameConf, conf_error, sizeof(conf_error)))
     {
         if (conf_error[0])
+        {
             snprintf(error, maxlength, "Could not read config file voicemanager.txt: %s", conf_error);
+        }
 
         return false;
     }
