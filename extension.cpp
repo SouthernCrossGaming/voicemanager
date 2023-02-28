@@ -1,6 +1,12 @@
 #include "extension.h"
 #include "inetmessage.h"
 
+// TODO
+/*
+command to raise all / lower all?
+*/
+
+ConVar vm_enable("vm_enable", "1", FCVAR_NONE, "Enables voice manager");
 DECL_DETOUR(SV_BroadcastVoiceData);
 
 VoiceManagerExt g_VoiceManager; // Global singleton for extension's main interface
@@ -23,89 +29,118 @@ struct VoiceOverride
 std::map<int, std::map<int, VoiceOverride>> g_activeOverrides;
 std::map<uint64_t, std::vector<UserOverride>> m_userOverrides;
 
-VoiceManagerClientState g_voiceManagerClientStates[MAX_PLAYERS];
+VoiceManagerClientState g_voiceManagerClientStates[MAXPLAYERS + 1];
 
-void SendVoiceDataMsg(int fromClient, int toClient, uint8_t* data, int nBytes, int64 xuid)
+void SendVoiceDataMsg(int fromClientSlot, IClient* pToClient, uint8_t* data, int nBytes, int64 xuid)
 {
-    IClient* pToClient = g_pServer->GetClient(toClient - 1);
-    if (pToClient != NULL && pToClient->IsConnected() && !pToClient->IsFakeClient())
-    {
-        SVC_VoiceData msg;
-        msg.m_bProximity = true;
-        msg.m_nLength = nBytes * 8;
-        msg.m_xuid = xuid;
-        msg.m_nFromClient = fromClient - 1; // 1 is added to this on the server side when reading the message, idk
-        msg.m_DataOut = data;
-        pToClient->SendNetMsg(msg);
-    }
+    SVC_VoiceData msg;
+    msg.m_bProximity = false;
+    msg.m_nLength = nBytes * 8;
+    msg.m_xuid = xuid;
+    msg.m_nFromClient = fromClientSlot;
+    msg.m_DataOut = data;
+    pToClient->SendNetMsg(msg);
 };
 
 DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
-    int nBytesOut;
-    int fromClient = playerhelpers->GetClientOfUserId(pClient->GetUserID());
+    if (!vm_enable.GetBool())
+    {
+        DETOUR_STATIC_CALL(SV_BroadcastVoiceData)(pClient, nBytes, data, xuid);
+        return;
+    }
+
+    int fromClientSlot = pClient->GetPlayerSlot();
+    int fromClientIndex = pClient->GetPlayerSlot() + 1;
 
     // If there are no active overrides for this user, just broadcast the original data
-    auto override = g_activeOverrides.find(fromClient);
+    auto override = g_activeOverrides.find(fromClientIndex);
     if (override == g_activeOverrides.end())
     {
         DETOUR_STATIC_CALL(SV_BroadcastVoiceData)(pClient, nBytes, data, xuid);
         return;
     }
 
-    // Iterate over each volume level to determine if it has clients requesting it
-    std::map<int, int> overridingClients;
-    for (int i = 0; i < MAX_LEVELS; i++)
+    // Populate a map of potential recipients.
+    // The criteria for a recipient:
+    // - The client is found
+    // - The client is connected
+    // - The client is not a bot (does not include replay/source tv)
+    // - The client can hear the player (accounts for mutes, voice loopback)
+    std::map<int, IClient*> recipientMap;
+    for (int client = 1; client <= playerhelpers->GetMaxClients(); client++)
     {
-        // If the level has one or more clients requesting it, we need to re-encode the data at the specified level
-        if (override->second[i].clients.size() > 0)
-        {
-            VoiceManager* vm = g_voiceManagerClientStates[override->first].GetVoiceManager(i);
-
-            uint8_t* newVoiceData = vm->OnBroadcastVoiceData(pClient, nBytes, data, &nBytesOut);
-
-            // Call CGameClient::SendNetMsg for each overriding client
-            for (int client : override->second[i].clients)
-            {
-                SendVoiceDataMsg(fromClient, client, newVoiceData, nBytesOut, xuid);
-                overridingClients.insert(std::pair<int, int>(client, override->first));
-            }
-        }
-    }
-
-    int clientCount = g_pServer->GetClientCount();
-    for (int client = 1; client < clientCount; client++)
-    {
-        if (overridingClients.find(client) != overridingClients.end())
+        IGamePlayer* pGamePlayer = playerhelpers->GetGamePlayer(client);
+        if (pGamePlayer == nullptr || !pGamePlayer->IsConnected() || pGamePlayer->IsFakeClient())
         {
             continue;
         }
 
-        SendVoiceDataMsg(fromClient, client, data, nBytes, xuid);
+        IClient* pToClient = g_pServer->GetClient(client - 1);
+        if (pToClient == nullptr || !pToClient->IsHearingClient(fromClientSlot))
+        {
+            continue;
+        }
+
+        recipientMap.insert({ client, pToClient });
+    }
+
+    // Iterate over each volume level to determine if it has clients requesting it
+    std::map<int, int> overridingClients;
+    for (int level = 0; level < MAX_LEVELS; level++)
+    {
+        // If the level has one or more clients requesting it, we need to re-encode the data at the specified level
+        if (override->second[level].clients.size() > 0)
+        {
+            VoiceManager* vm = g_voiceManagerClientStates[override->first].GetVoiceManager(level);
+
+            int nBytesOverride;
+            uint8_t* newVoiceData = vm->OnBroadcastVoiceData(pClient, nBytes, data, &nBytesOverride);
+
+            // Call CGameClient::SendNetMsg for each overriding client
+            for (int client : override->second[level].clients)
+            {
+                // If the overriding client is not found, move on
+                auto toClientPair = recipientMap.find(client);
+                if (toClientPair == recipientMap.end())
+                {
+                    continue;
+                }
+
+                SendVoiceDataMsg(fromClientSlot, toClientPair->second, newVoiceData, nBytesOverride, xuid);
+
+                // Remove the recipient from the map as we've already sent them the voice message
+                recipientMap.erase(client);
+            }
+        }
+    }
+
+    for (const auto& [index, client] : recipientMap)
+    {
+        SendVoiceDataMsg(fromClientSlot, client, data, nBytes, xuid);
     }
 }
 
 int64_t GetClientSteamId(int client)
 {
-    int64_t steamId = -1;
     auto player = playerhelpers->GetGamePlayer(client);
-    if (player != NULL && player->IsConnected())
+    if (player == nullptr || !player->IsConnected())
     {
-        steamId = player->GetSteamId64();
+        return -1;
     }
 
-    return steamId;
+    return player->GetSteamId64();
 }
 
-std::map<int64_t, int> GetClientSteamIdMap()
+std::map<uint64_t, int> GetClientSteamIdMap()
 {
-    auto steamIdsToSlots = std::map<int64_t, int>();
-    for (int client = 0; client < MAX_PLAYERS; client++)
+    auto steamIdsToSlots = std::map<uint64_t, int>();
+    for (int client = 1; client <= playerhelpers->GetMaxClients(); client++)
     {
-        int64_t steamId = GetClientSteamId(client);
+        uint64_t steamId = GetClientSteamId(client);
         if (steamId > 0)
         {
-            steamIdsToSlots.insert(std::pair<int64_t, int>(steamId, client));
+            steamIdsToSlots.insert(std::pair<uint64_t, int>(steamId, client));
         }
     }
 
@@ -130,16 +165,16 @@ void RefreshActiveOverrides()
         auto overrides = overridePreference.second;
         for (auto override: overrides)
         {
-            auto overrideeSteamIdToSlot = steamIdsToSlots.find(override.steamId);
-            if (overrideeSteamIdToSlot == steamIdsToSlots.end())
+            auto overriddenSteamIdToSlot = steamIdsToSlots.find(override.steamId);
+            if (overriddenSteamIdToSlot == steamIdsToSlots.end())
             {
                 // The overridden player is not in the server, move on
                 continue;
             }
 
-            int overrideeSlot = overrideeSteamIdToSlot->second;
+            int overriddenSlot = overriddenSteamIdToSlot->second;
 
-            auto newActiveOverride = newActiveOverrides.find(overrideeSlot);
+            auto newActiveOverride = newActiveOverrides.find(overriddenSlot);
             if (newActiveOverride == newActiveOverrides.end())
             {
                 auto overrideLevels = std::map<int, VoiceOverride>();
@@ -156,7 +191,7 @@ void RefreshActiveOverrides()
                     overrideLevels.insert(std::pair<int, VoiceOverride>{i, vo});
                 }
 
-                newActiveOverrides.insert(std::pair<int, std::map<int, VoiceOverride>>{overrideeSlot, overrideLevels});
+                newActiveOverrides.insert(std::pair<int, std::map<int, VoiceOverride>>{overriddenSlot, overrideLevels});
             }
             else
             {
@@ -168,8 +203,75 @@ void RefreshActiveOverrides()
     g_activeOverrides = newActiveOverrides;
 }
 
+static cell_t OnGetClientOverride(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    int adjuster = params[1];
+    int adjusted = params[2];
+
+    int64_t adjusterSteamId = GetClientSteamId(adjuster);
+
+    auto overridePair = m_userOverrides.find(adjusterSteamId);
+    // User has no adjustments, return -1
+    if (overridePair == m_userOverrides.end())
+    {
+        return -1;
+    }
+
+    int64_t adjustedSteamId = GetClientSteamId(adjusted);
+    for (auto override: overridePair->second)
+    {
+        if (override.steamId == adjustedSteamId)
+        {
+            return override.level;
+        }
+    }
+
+    return -1;
+}
+
+static cell_t OnClearClientOverrides(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    int client = params[1];
+
+    int64_t steamId = GetClientSteamId(client);
+    if (m_userOverrides.find(steamId) != m_userOverrides.end())
+    {
+        m_userOverrides.erase(steamId);
+    }
+
+    RefreshActiveOverrides();
+
+    return true;
+}
+
+static cell_t OnRefreshActiveOverrides(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    RefreshActiveOverrides();
+    return true;
+}
+
 static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* params)
 {
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
     int adjuster = params[1];
     int adjusted = params[2];
     int volume = params[3];
@@ -245,7 +347,10 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
 const sp_nativeinfo_t g_Natives[] =
 {
     {"OnPlayerAdjustVolume", OnPlayerAdjustVolume},
-    {NULL,                   NULL},
+    {"RefreshActiveOverrides", OnRefreshActiveOverrides},
+    {"ClearClientOverrides", OnClearClientOverrides},
+    {"GetClientOverride", OnGetClientOverride},
+    {nullptr, nullptr},
 };
 
 void VoiceManagerExt::SDK_OnAllLoaded()
@@ -267,7 +372,9 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
     if (!gameconfs->LoadGameConfigFile("voicemanager", &g_pGameConf, conf_error, sizeof(conf_error)))
     {
         if (conf_error[0])
+        {
             snprintf(error, maxlength, "Could not read config file voicemanager.txt: %s", conf_error);
+        }
 
         return false;
     }
@@ -277,7 +384,7 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
     bool bDetoursInited = false;
     CREATE_DETOUR_STATIC(SV_BroadcastVoiceData, "SV_BroadcastVoiceData", bDetoursInited);
 
-    for (int i = 0; i < MAX_PLAYERS; i++)
+    for (int i = 1; i <= playerhelpers->GetMaxClients(); i++)
     {
         g_voiceManagerClientStates[i] = VoiceManagerClientState();
     }
@@ -288,5 +395,13 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 bool VoiceManagerExt::RegisterConCommandBase(ConCommandBase* pCommand)
 {
     META_REGCVAR(pCommand);
+    return true;
+}
+
+bool VoiceManagerExt::SDK_OnMetamodLoad(ISmmAPI* ismm, char* error, size_t maxlen, bool late)
+{
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pCVar, ICvar, CVAR_INTERFACE_VERSION);
+    ConVar_Register(0, this);
+
     return true;
 }

@@ -8,16 +8,16 @@ VoiceManagerClientState::VoiceManagerClientState()
         switch (level)
         {
         case 0:
-            gain = LEVEL_LOWER;
+            gain = LEVEL_QUIETER;
             break;
         case 1:
-            gain = LEVEL_LOW;
+            gain = LEVEL_QUIET;
             break;
         case 2:
-            gain = LEVEL_HIGH;
+            gain = LEVEL_LOUD;
             break;
         case 3:
-            gain = LEVEL_HIGHER;
+            gain = LEVEL_LOUDER;
             break;
         }
 
