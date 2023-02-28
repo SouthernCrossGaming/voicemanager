@@ -1,18 +1,16 @@
 
-#define MAX_PLAYERS 24
+#define MAXPLAYERS 65
 
 #define INDEX_LOWER 0
 #define INDEX_LOW 1
 #define INDEX_HIGH 2
 #define INDEX_HIGHER 3
-#define INDEX_NORMAL 4
 
 #define LEVEL_LOWER -2500
 #define LEVEL_LOW -1000
 #define LEVEL_HIGH 1000
 #define LEVEL_HIGHER 2500
-#define LEVEL_NORMAL 1500
-#define MAX_LEVELS 5
+#define MAX_LEVELS 4
 
 #define MAX_FRAMEBUFFER_SAMPLES 480
 #define STEAM_HEADER_SIZE 12

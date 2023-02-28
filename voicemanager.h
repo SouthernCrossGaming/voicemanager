@@ -27,8 +27,8 @@ private:
 	std::vector<DecodedChunk> m_vecDecodedChunks;
 	opus_int32 m_sampleRate = 0;
 	opus_int32 m_gain = 0;
-	OpusDecoder* m_Opus_Decoder = NULL;
-	OpusEncoder* m_Opus_Encoder = NULL;
+	OpusDecoder* m_Opus_Decoder = nullptr;
+	OpusEncoder* m_Opus_Encoder = nullptr;
 
 public:
 	VoiceManager();
