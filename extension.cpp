@@ -1,6 +1,12 @@
 #include "extension.h"
 #include "inetmessage.h"
 
+// TODO
+/*
+command to raise all / lower all?
+*/
+
+ConVar vm_enable("vm_enable", "1", FCVAR_NONE, "Enables voice manager");
 DECL_DETOUR(SV_BroadcastVoiceData);
 
 VoiceManagerExt g_VoiceManager; // Global singleton for extension's main interface
@@ -38,6 +44,12 @@ void SendVoiceDataMsg(int fromClientSlot, IClient* pToClient, uint8_t* data, int
 
 DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
+    if (!vm_enable.GetBool())
+    {
+        DETOUR_STATIC_CALL(SV_BroadcastVoiceData)(pClient, nBytes, data, xuid);
+        return;
+    }
+
     int fromClientSlot = pClient->GetPlayerSlot();
     int fromClientIndex = pClient->GetPlayerSlot() + 1;
 
@@ -120,15 +132,15 @@ int64_t GetClientSteamId(int client)
     return player->GetSteamId64();
 }
 
-std::map<int64_t, int> GetClientSteamIdMap()
+std::map<uint64_t, int> GetClientSteamIdMap()
 {
-    auto steamIdsToSlots = std::map<int64_t, int>();
-    for (int client = 0; client < playerhelpers->GetMaxClients(); client++)
+    auto steamIdsToSlots = std::map<uint64_t, int>();
+    for (int client = 1; client <= playerhelpers->GetMaxClients(); client++)
     {
-        int64_t steamId = GetClientSteamId(client);
+        uint64_t steamId = GetClientSteamId(client);
         if (steamId > 0)
         {
-            steamIdsToSlots.insert(std::pair<int64_t, int>(steamId, client));
+            steamIdsToSlots.insert(std::pair<uint64_t, int>(steamId, client));
         }
     }
 
@@ -191,8 +203,75 @@ void RefreshActiveOverrides()
     g_activeOverrides = newActiveOverrides;
 }
 
+static cell_t OnGetClientOverride(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    int adjuster = params[1];
+    int adjusted = params[2];
+
+    int64_t adjusterSteamId = GetClientSteamId(adjuster);
+
+    auto overridePair = m_userOverrides.find(adjusterSteamId);
+    // User has no adjustments, return -1
+    if (overridePair == m_userOverrides.end())
+    {
+        return -1;
+    }
+
+    int64_t adjustedSteamId = GetClientSteamId(adjusted);
+    for (auto override: overridePair->second)
+    {
+        if (override.steamId == adjustedSteamId)
+        {
+            return override.level;
+        }
+    }
+
+    return -1;
+}
+
+static cell_t OnClearClientOverrides(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    int client = params[1];
+
+    int64_t steamId = GetClientSteamId(client);
+    if (m_userOverrides.find(steamId) != m_userOverrides.end())
+    {
+        m_userOverrides.erase(steamId);
+    }
+
+    RefreshActiveOverrides();
+
+    return true;
+}
+
+static cell_t OnRefreshActiveOverrides(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    RefreshActiveOverrides();
+    return true;
+}
+
 static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* params)
 {
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
     int adjuster = params[1];
     int adjusted = params[2];
     int volume = params[3];
@@ -268,6 +347,9 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
 const sp_nativeinfo_t g_Natives[] =
 {
     {"OnPlayerAdjustVolume", OnPlayerAdjustVolume},
+    {"RefreshActiveOverrides", OnRefreshActiveOverrides},
+    {"ClearClientOverrides", OnClearClientOverrides},
+    {"GetClientOverride", OnGetClientOverride},
     {nullptr, nullptr},
 };
 
@@ -313,5 +395,13 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 bool VoiceManagerExt::RegisterConCommandBase(ConCommandBase* pCommand)
 {
     META_REGCVAR(pCommand);
+    return true;
+}
+
+bool VoiceManagerExt::SDK_OnMetamodLoad(ISmmAPI* ismm, char* error, size_t maxlen, bool late)
+{
+    GET_V_IFACE_CURRENT(GetEngineFactory, g_pCVar, ICvar, CVAR_INTERFACE_VERSION);
+    ConVar_Register(0, this);
+
     return true;
 }
