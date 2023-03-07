@@ -28,6 +28,7 @@ struct VoiceOverride
 
 std::map<int, std::map<int, VoiceOverride>> g_activeOverrides;
 std::map<uint64_t, std::vector<UserOverride>> m_userOverrides;
+std::map<uint64_t, int> m_userGlobalOverrides;
 
 VoiceManagerClientState g_voiceManagerClientStates[MAXPLAYERS + 1];
 
@@ -121,7 +122,7 @@ DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes,
     }
 }
 
-int64_t GetClientSteamId(int client)
+uint64_t GetClientSteamId(int client)
 {
     auto player = playerhelpers->GetGamePlayer(client);
     if (player == nullptr || !player->IsConnected())
@@ -147,55 +148,77 @@ std::map<uint64_t, int> GetClientSteamIdMap()
     return steamIdsToSlots;
 }
 
+void AddOverride(std::map<int, std::map<int, VoiceOverride>>* overrides, int adjuster, int adjusted, int level)
+{
+    auto newActiveOverride = overrides->find(adjusted);
+    if (newActiveOverride == overrides->end())
+    {
+        auto overrideLevels = std::map<int, VoiceOverride>();
+        for (int i = 0; i < MAX_LEVELS; i++)
+        {
+            VoiceOverride vo;
+            vo.clients = std::vector<int>();
+
+            if (level == i)
+            {
+                vo.clients.push_back(adjuster);
+            }
+
+            overrideLevels.insert(std::pair<int, VoiceOverride>{i, vo});
+        }
+
+        overrides->insert(std::pair<int, std::map<int, VoiceOverride>>{adjusted, overrideLevels});
+    }
+    else
+    {
+        newActiveOverride->second.at(level).clients.push_back(adjuster);
+    }
+}
+
 void RefreshActiveOverrides()
 {
     auto newActiveOverrides = std::map<int, std::map<int, VoiceOverride>>();
     auto steamIdsToSlots = GetClientSteamIdMap();
 
-    for (auto const& overridePreference : m_userOverrides)
+    // Iterate over all active clients
+    for (auto const& clientSteamIdPair : steamIdsToSlots)
     {
-        auto overriderSteamIdToSlot = steamIdsToSlots.find(overridePreference.first);
-        if (overriderSteamIdToSlot == steamIdsToSlots.end())
-        {
-            // The overriding player is not in the server, move on
-            continue;
-        }
+        int adjuster = clientSteamIdPair.second;
 
-        int overriderSlot = overriderSteamIdToSlot->second;
-        auto overrides = overridePreference.second;
-        for (auto override: overrides)
+        for (auto const& otherClientSteamIdPair : steamIdsToSlots)
         {
-            auto overriddenSteamIdToSlot = steamIdsToSlots.find(override.steamId);
-            if (overriddenSteamIdToSlot == steamIdsToSlots.end())
+            int adjusted = otherClientSteamIdPair.second;
+
+            bool adjustmentMade = false;
+            auto userOverride = m_userOverrides.find(clientSteamIdPair.first);
+            if (userOverride != m_userOverrides.end())
             {
-                // The overridden player is not in the server, move on
+                auto overrides = userOverride->second;
+                for (auto override: overrides)
+                {
+                    if (override.steamId == otherClientSteamIdPair.first)
+                    {
+                        AddOverride(&newActiveOverrides, adjuster, adjusted, override.level);
+                        adjustmentMade = true;
+                        break;
+                    }
+
+                    if (adjustmentMade)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (adjustmentMade)
+            {
                 continue;
             }
 
-            int overriddenSlot = overriddenSteamIdToSlot->second;
-
-            auto newActiveOverride = newActiveOverrides.find(overriddenSlot);
-            if (newActiveOverride == newActiveOverrides.end())
+            auto globalOverride = m_userGlobalOverrides.find(clientSteamIdPair.first);
+            if (globalOverride != m_userGlobalOverrides.end())
             {
-                auto overrideLevels = std::map<int, VoiceOverride>();
-                for (int i = 0; i < MAX_LEVELS; i++)
-                {
-                    VoiceOverride vo;
-                    vo.clients = std::vector<int>();
-
-                    if (override.level == i)
-                    {
-                        vo.clients.push_back(overriderSlot);
-                    }
-
-                    overrideLevels.insert(std::pair<int, VoiceOverride>{i, vo});
-                }
-
-                newActiveOverrides.insert(std::pair<int, std::map<int, VoiceOverride>>{overriddenSlot, overrideLevels});
-            }
-            else
-            {
-                newActiveOverride->second.at(override.level).clients.push_back(overriderSlot);
+                AddOverride(&newActiveOverrides, adjuster, adjusted, globalOverride->second);
             }
         }
     }
@@ -213,7 +236,7 @@ static cell_t OnGetClientOverride(IPluginContext* pContext, const cell_t* params
     int adjuster = params[1];
     int adjusted = params[2];
 
-    int64_t adjusterSteamId = GetClientSteamId(adjuster);
+    uint64_t adjusterSteamId = GetClientSteamId(adjuster);
 
     auto overridePair = m_userOverrides.find(adjusterSteamId);
     // User has no adjustments, return -1
@@ -222,7 +245,7 @@ static cell_t OnGetClientOverride(IPluginContext* pContext, const cell_t* params
         return -1;
     }
 
-    int64_t adjustedSteamId = GetClientSteamId(adjusted);
+    uint64_t adjustedSteamId = GetClientSteamId(adjusted);
     for (auto override: overridePair->second)
     {
         if (override.steamId == adjustedSteamId)
@@ -243,7 +266,7 @@ static cell_t OnClearClientOverrides(IPluginContext* pContext, const cell_t* par
 
     int client = params[1];
 
-    int64_t steamId = GetClientSteamId(client);
+    uint64_t steamId = GetClientSteamId(client);
     if (m_userOverrides.find(steamId) != m_userOverrides.end())
     {
         m_userOverrides.erase(steamId);
@@ -276,8 +299,8 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
     int adjusted = params[2];
     int volume = params[3];
 
-    int64_t adjusterSteamId = GetClientSteamId(adjuster);
-    int64_t adjustedSteamId = GetClientSteamId(adjusted);
+    uint64_t adjusterSteamId = GetClientSteamId(adjuster);
+    uint64_t adjustedSteamId = GetClientSteamId(adjusted);
     if (adjusterSteamId <= 0 || adjustedSteamId <= 0)
     {
         return false;
@@ -332,10 +355,87 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
         }
         else
         {
-            m_userOverrides.insert(std::pair<uint64_t, std::vector<UserOverride>>{
-                adjusterSteamId,
-                    std::vector<UserOverride>{uo}
-            });
+            m_userOverrides.insert({ adjusterSteamId, std::vector<UserOverride>{uo} });
+        }
+    }
+
+    RefreshActiveOverrides();
+
+    return true;
+}
+
+static cell_t AdminPrintVmStatus(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    int client = params[1];
+
+    std::string msg;
+    for (auto overrideLevel : g_activeOverrides)
+    {
+        for (auto overrides : overrideLevel.second)
+        {
+            int adjusted = overrides.first;
+            char buffer[1024];
+            // std::string adjusters = "";
+            // for (auto adjuster : overrides.second.clients)
+            // {
+            //     adjusters = adjusters + ", " + playerhelpers->GetGamePlayer(adjuster)->GetName();
+            // }
+
+            //playerhelpers->GetGamePlayer(adjusted)->GetName()
+            std::snprintf(buffer, sizeof(buffer), "Level: %i, Adjusted: %i", overrideLevel.first, adjusted);
+            msg = msg + "\n" + buffer;
+        }
+    }
+
+    smutils->LogError(myself, msg.c_str());
+
+    g_SMAPI->ClientConPrintf(engine->PEntityOfEntIndex(client), msg.c_str());
+    return true;
+}
+
+static cell_t OnPlayerGlobalAdjust(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    int adjuster = params[1];
+    int volume = params[2];
+
+    uint64_t adjusterSteamId = GetClientSteamId(adjuster);
+    if (adjusterSteamId <= 0 || adjusterSteamId <= 0)
+    {
+        return false;
+    }
+
+    auto globalOverride = m_userGlobalOverrides.find(adjusterSteamId);
+
+    bool isReset = volume < 0;
+    if (isReset)
+    {
+        // Do nothing, they have no overrides and they're setting a preference as normal
+        if (globalOverride == m_userGlobalOverrides.end())
+        {
+            return true;
+        }
+
+        m_userGlobalOverrides.erase(adjusterSteamId);
+    }
+    else
+    {
+        if (globalOverride != m_userGlobalOverrides.end())
+        {
+            m_userGlobalOverrides[adjusterSteamId] = volume;
+        }
+        else
+        {
+            m_userGlobalOverrides.insert({ adjusterSteamId, volume });
         }
     }
 
@@ -350,6 +450,8 @@ const sp_nativeinfo_t g_Natives[] =
     {"RefreshActiveOverrides", OnRefreshActiveOverrides},
     {"ClearClientOverrides", OnClearClientOverrides},
     {"GetClientOverride", OnGetClientOverride},
+    {"OnPlayerGlobalAdjust", OnPlayerGlobalAdjust},
+    {"AdminPrintVmStatus", AdminPrintVmStatus},
     {nullptr, nullptr},
 };
 
