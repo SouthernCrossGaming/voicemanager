@@ -8,14 +8,16 @@
 
 struct EncodedChunk
 {
-	int16_t index = 0;
-	std::vector<uint8_t> data;
+	int16_t size;
+	int16_t index;
+	uint8_t* data;
 };
 
 struct DecodedChunk
 {
-	int16_t index = 0;
-	std::vector<int16_t> data;
+	int16_t samples;
+	int16_t index;
+	opus_int16* data;
 };
 
 class VoiceManager

@@ -35,13 +35,12 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
     for (DecodedChunk decoded : m_vecDecodedChunks)
     {
         EncodedChunk encoded = OpusEncode(decoded);
-        if (encoded.data.size() <= 0)
+        if (encoded.size <= 0)
         {
             return originalVoiceData;
         }
 
-        auto encodedSize = encoded.data.size();
-        char* pEncodedSize = (char*)&encodedSize;
+        char* pEncodedSize = (char*)&encoded.size;
         std::copy(pEncodedSize, pEncodedSize + sizeof(int16_t), &pVoiceDataResult[encPos]);
         encPos += 2;
 
@@ -49,9 +48,9 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
         std::copy(pIndex, pIndex + sizeof(int16_t), &pVoiceDataResult[encPos]);
         encPos += 2;
 
-        std::copy(encoded.data.data(), encoded.data.data() + encoded.data.size(), &pVoiceDataResult[encPos]);
+        std::copy(encoded.data, encoded.data + encoded.size, &pVoiceDataResult[encPos]);
 
-        encPos += encoded.data.size();
+        encPos += encoded.size;
     }
 
     int16_t voiceDataLength = encPos - STEAM_HEADER_SIZE - 2;
@@ -148,11 +147,10 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
             while (tpos <= (maxpos - 4))
             {
                 EncodedChunk encodedChunk;
-                int16_t encodedSize = *((int16_t*)&bytes[tpos]);
-                encodedChunk.data = std::vector<uint8_t>(encodedSize);
+                encodedChunk.size = *((int16_t*)&bytes[tpos]);
                 tpos += 2;
 
-                if (encodedSize <= 0)
+                if (encodedChunk.size <= 0)
                 {
                     smutils->LogError(myself, "Found a chunk with a size <= 0");
                     return;
@@ -161,19 +159,16 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
                 encodedChunk.index = *((int16_t*)&bytes[tpos]);
                 tpos += 2;
 
-                for (int i = 0; i < encodedSize; i++)
-                {
-                    encodedChunk.data[i] = bytes[tpos + i];
-                }
+                encodedChunk.data = &bytes[tpos];
 
                 DecodedChunk decodedChunk = this->OpusDecode(encodedChunk);
-                if (decodedChunk.data.size() <= 0)
+                if (decodedChunk.samples <= 0)
                 {
                     return;
                 }
 
                 m_vecDecodedChunks.push_back(decodedChunk);
-                tpos += encodedChunk.data.size();
+                tpos += encodedChunk.size;
             }
         }
         case 0: // Silence
@@ -281,19 +276,15 @@ EncodedChunk VoiceManager::OpusEncode(DecodedChunk decoded)
 {
     EncodedChunk encoded;
     encoded.index = decoded.index;
-    uint8_t x[MAX_PACKET_SIZE];
+    encoded.data = new uint8_t[MAX_PACKET_SIZE]();
 
-    int compressedBytes = opus_encode(m_Opus_Encoder, decoded.data.data(), decoded.data.size(), x, (opus_int32)MAX_PACKET_SIZE);
+    int compressedBytes = opus_encode(m_Opus_Encoder, decoded.data, decoded.samples, encoded.data, (opus_int32)MAX_PACKET_SIZE);
     if (compressedBytes < 0)
     {
         smutils->LogError(myself, "Opus Encoder Failed with err: %s", ErrorToString(compressedBytes));
     }
 
-    encoded.data = std::vector<uint8_t>(compressedBytes);
-    for (int i = 0; i < compressedBytes; i++)
-    {
-        encoded.data[i] = x[i];
-    }
+    encoded.size = compressedBytes;
 
     return encoded;
 }
@@ -302,19 +293,15 @@ DecodedChunk VoiceManager::OpusDecode(EncodedChunk encoded)
 {
     DecodedChunk decoded;
     decoded.index = encoded.index;
-    int16_t x[MAX_PACKET_SIZE];
+    decoded.data = new opus_int16[MAX_FRAMEBUFFER_SAMPLES]();
 
-    int samples = opus_decode(m_Opus_Decoder, encoded.data.data(), encoded.data.size(), x, MAX_FRAMEBUFFER_SAMPLES, 0);
+    int samples = opus_decode(m_Opus_Decoder, encoded.data, encoded.size, decoded.data, MAX_FRAMEBUFFER_SAMPLES, 0);
     if (samples < 0)
     {
         smutils->LogError(myself, "Opus Decoder Failed: %s", ErrorToString(samples));
     }
 
-    decoded.data = std::vector<int16_t>(samples);
-    for (int i = 0; i < samples; i++)
-    {
-        decoded.data[i] = x[i];
-    }
+    decoded.samples = samples;
 
     return decoded;
 }
