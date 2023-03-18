@@ -27,6 +27,7 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
 
     if (m_vecDecodedChunks.size() <= 0 || !InitOpusEncoder(m_sampleRate))
     {
+        delete[] pVoiceDataResult;
         return originalVoiceData;
     }
 
@@ -37,6 +38,7 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
         EncodedChunk encoded = OpusEncode(decoded);
         if (encoded.data.size() <= 0)
         {
+            delete[] pVoiceDataResult;
             return originalVoiceData;
         }
 
@@ -57,6 +59,7 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
     int16_t voiceDataLength = encPos - STEAM_HEADER_SIZE - 2;
     if (voiceDataLength <= 0)
     {
+        delete[] pVoiceDataResult;
         return originalVoiceData;
     }
 
@@ -71,6 +74,8 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
     std::copy(pNewCRC, pNewCRC + sizeof(uint32_t), &pVoiceDataResult[encPos]);
 
     *nBytesOut = STEAM_HEADER_SIZE + 2 + voiceDataLength + sizeof(uint32_t);
+
+    delete[] originalVoiceData;
     return pVoiceDataResult;
 }
 
