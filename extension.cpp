@@ -113,6 +113,8 @@ DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes,
                 // Remove the recipient from the map as we've already sent them the voice message
                 recipientMap.erase(client);
             }
+
+            delete[] newVoiceData;
         }
     }
 
