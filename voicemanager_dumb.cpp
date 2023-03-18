@@ -17,17 +17,23 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
     *nBytesOut = 0;
     m_vecDecodedChunks.clear();
 
-    uint8_t* originalVoiceData = new uint8_t[MAX_PACKET_SIZE]();
-    std::copy(data, data + nBytes, &originalVoiceData[0]);
+    std::vector<uint8_t> originalVoiceData = std::vector<uint8_t>(nBytes);
+    for (int i = 0; i < nBytes; i++)
+    {
+        originalVoiceData[i] = data[i];
+    }
 
-    uint8_t* pVoiceDataResult = new uint8_t[MAX_PACKET_SIZE]();
-    std::copy(data, data + nBytes, &pVoiceDataResult[0]);
+    std::vector<uint8_t> voiceDataResult = std::vector<uint8_t>(nBytes);
+    for (int i = 0; i < nBytes; i++)
+    {
+        voiceDataResult[i] = data[i];
+    }
 
-    ParseSteamVoicePacket(pVoiceDataResult, nBytes);
+    ParseSteamVoicePacket(voiceDataResult.data(), nBytes);
 
     if (m_vecDecodedChunks.size() <= 0 || !InitOpusEncoder(m_sampleRate))
     {
-        return originalVoiceData;
+        return originalVoiceData.data();
     }
 
     int16_t encPos = STEAM_HEADER_SIZE + 2;
@@ -37,41 +43,61 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
         EncodedChunk encoded = OpusEncode(decoded);
         if (encoded.data.size() <= 0)
         {
-            return originalVoiceData;
+            return originalVoiceData.data();
         }
 
         auto encodedSize = encoded.data.size();
         char* pEncodedSize = (char*)&encodedSize;
-        std::copy(pEncodedSize, pEncodedSize + sizeof(int16_t), &pVoiceDataResult[encPos]);
+
+        voiceDataResult[encPos + 1] = pEncodedSize[0];
+        voiceDataResult[encPos] = pEncodedSize[1];
+
+        // std::copy(pEncodedSize, pEncodedSize + sizeof(int16_t), &pVoiceDataResult[encPos]);
         encPos += 2;
 
         char* pIndex = (char*)&encoded.index;
-        std::copy(pIndex, pIndex + sizeof(int16_t), &pVoiceDataResult[encPos]);
+
+        voiceDataResult[encPos + 1] = pIndex[0];
+        voiceDataResult[encPos] = pIndex[1];
+
+        // std::copy(pIndex, pIndex + sizeof(int16_t), &pVoiceDataResult[encPos]);
         encPos += 2;
 
-        std::copy(encoded.data.data(), encoded.data.data() + encoded.data.size(), &pVoiceDataResult[encPos]);
+        // std::copy(encoded.data.data(), encoded.data.data() + encoded.data.size(), &pVoiceDataResult[encPos]);
+        for (int i = 0; i < encoded.data.size(); i++)
+        {
+            voiceDataResult[encPos] = encoded.data[i];
+            encPos++;
+        }
+        // voiceDataResult[encPos] = encoded.index;
 
-        encPos += encoded.data.size();
+        // encPos += encoded.data.size();
     }
 
     int16_t voiceDataLength = encPos - STEAM_HEADER_SIZE - 2;
     if (voiceDataLength <= 0)
     {
-        return originalVoiceData;
+        return originalVoiceData.data();
     }
 
     // Copy the voice data byte length to the output data, just after the header info
     char* pVoiceDataLength = (char*)&voiceDataLength;
-    std::copy(pVoiceDataLength, pVoiceDataLength + sizeof(uint16_t), &pVoiceDataResult[STEAM_HEADER_SIZE]);
+    // std::copy(pVoiceDataLength, pVoiceDataLength + sizeof(uint16_t), &pVoiceDataResult[STEAM_HEADER_SIZE]);
+    voiceDataResult[STEAM_HEADER_SIZE + 1] = pVoiceDataLength[0];
+    voiceDataResult[STEAM_HEADER_SIZE] = pVoiceDataLength[1];
 
-    uint32_t newCRC = CRC::Calculate(pVoiceDataResult, encPos, CRC::CRC_32());
+    uint32_t newCRC = CRC::Calculate(voiceDataResult.data(), encPos, CRC::CRC_32());
 
     // Copy the new CRC to the end of the output data
     char* pNewCRC = (char*)&newCRC;
-    std::copy(pNewCRC, pNewCRC + sizeof(uint32_t), &pVoiceDataResult[encPos]);
+    // std::copy(pNewCRC, pNewCRC + sizeof(uint32_t), &pVoiceDataResult[encPos]);
+    voiceDataResult[encPos + 3] = pNewCRC[0];
+    voiceDataResult[encPos + 2] = pNewCRC[1];
+    voiceDataResult[encPos + 1] = pNewCRC[2];
+    voiceDataResult[encPos] = pNewCRC[3];
 
     *nBytesOut = STEAM_HEADER_SIZE + 2 + voiceDataLength + sizeof(uint32_t);
-    return pVoiceDataResult;
+    return voiceDataResult.data();
 }
 
 void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
