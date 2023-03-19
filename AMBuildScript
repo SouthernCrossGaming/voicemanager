@@ -264,7 +264,7 @@ class ExtensionConfig(object):
     cxx.defines += ['_LINUX', 'POSIX']
     cxx.linkflags += ['-Wl,--exclude-libs,ALL', '-lm', '/usr/local/lib/libopus.a']
     if cxx.vendor == 'gcc':
-      cxx.linkflags += ['-static-libstdc++', '-static-libgcc']
+      cxx.linkflags += ['-static-libgcc']
     elif cxx.vendor == 'clang':
       cxx.linkflags += ['-lgcc_eh']
 
