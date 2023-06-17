@@ -27,7 +27,7 @@ struct UserOverride {
 	int level;
 };
 
-class VoiceManagerExt: public SDKExtension, public IConCommandBaseAccessor, public IPluginsListener
+class VoiceManagerExt : public SDKExtension, public IConCommandBaseAccessor, public IPluginsListener
 {
 public:
 	virtual bool SDK_OnLoad(char* error, size_t maxlen, bool late);
