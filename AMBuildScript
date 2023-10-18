@@ -117,7 +117,7 @@ class ExtensionConfig(object):
     if builder.options.mms_path:
       self.mms_root = builder.options.mms_path
     else:
-      self.mms_root = ResolveEnvPath('MMSOURCE110', 'mmsource-1.10')
+      self.mms_root = ResolveEnvPath('MMSOURCE111', 'mmsource-1.11')
       if not self.mms_root:
         self.mms_root = ResolveEnvPath('MMSOURCE', 'metamod-source')
       if not self.mms_root:
@@ -174,7 +174,7 @@ class ExtensionConfig(object):
       '-Wno-array-bounds',
       '-msse',
       '-m32',
-      '-fvisibility=hidden',
+      '-fvisibility=hidden'
     ]
     cxx.cxxflags += [
       '-std=c++14',
@@ -182,7 +182,7 @@ class ExtensionConfig(object):
       '-fno-threadsafe-statics',
       '-Wno-non-virtual-dtor',
       '-Wno-overloaded-virtual',
-      '-fvisibility-inlines-hidden',
+      '-fvisibility-inlines-hidden'
     ]
     cxx.linkflags += ['-m32']
 
@@ -262,11 +262,12 @@ class ExtensionConfig(object):
 
   def configure_linux(self, cxx):
     cxx.defines += ['_LINUX', 'POSIX']
-    cxx.linkflags += ['-Wl,--exclude-libs,ALL', '-lm', '/usr/local/lib/libopus.a']
+    cxx.linkflags += ['-Wl,--exclude-libs,ALL', '/usr/local/lib/libopus.a']
     if cxx.vendor == 'gcc':
       cxx.linkflags += ['-static-libgcc']
     elif cxx.vendor == 'clang':
       cxx.linkflags += ['-lgcc_eh']
+    cxx.linkflags += ['-lm']
 
   def configure_mac(self, cxx):
     cxx.defines += ['OSX', '_OSX', 'POSIX']
