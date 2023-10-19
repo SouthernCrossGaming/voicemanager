@@ -104,7 +104,7 @@ class ExtensionConfig(object):
     if builder.options.sm_path:
       self.sm_root = builder.options.sm_path
     else:
-      self.sm_root = ResolveEnvPath('SOURCEMOD18', 'sourcemod-1.8')
+      self.sm_root = ResolveEnvPath('SOURCEMOD111', 'sourcemod-1.11')
       if not self.sm_root:
         self.sm_root = ResolveEnvPath('SOURCEMOD', 'sourcemod')
       if not self.sm_root:
@@ -246,7 +246,7 @@ class ExtensionConfig(object):
       'odbc32.lib',
       'odbccp32.lib',
       'legacy_stdio_definitions.lib',
-      'D:\\ws\\sourcemod\\sourcemod\\public\\voicemanager\\include\\opus1.3.1.lib'
+      'C:\\ws\\voicemanager\\extension\\include\\opus1.3.1.lib'
     ]
 
     if builder.options.opt == '1':
