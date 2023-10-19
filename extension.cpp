@@ -1,11 +1,6 @@
 #include "extension.h"
 #include "inetmessage.h"
 
-// TODO
-/*
-command to raise all / lower all?
-*/
-
 ConVar vm_enable("vm_enable", "1", FCVAR_NONE, "Enables voice manager");
 DECL_DETOUR(SV_BroadcastVoiceData);
 
@@ -196,7 +191,7 @@ void RefreshActiveOverrides()
             if (userOverride != m_userOverrides.end())
             {
                 auto overrides = userOverride->second;
-                for (auto override: overrides)
+                for (auto override : overrides)
                 {
                     if (override.steamId == otherClientSteamIdPair.first)
                     {
@@ -248,7 +243,7 @@ static cell_t OnGetClientOverride(IPluginContext* pContext, const cell_t* params
     }
 
     uint64_t adjustedSteamId = GetClientSteamId(adjusted);
-    for (auto override: overridePair->second)
+    for (auto override : overridePair->second)
     {
         if (override.steamId == adjustedSteamId)
         {
@@ -287,6 +282,66 @@ static cell_t OnRefreshActiveOverrides(IPluginContext* pContext, const cell_t* p
     }
 
     RefreshActiveOverrides();
+    return true;
+}
+
+static cell_t LoadPlayerAdjustment(IPluginContext* pContext, const cell_t* params)
+{
+    if (!vm_enable.GetBool())
+    {
+        return false;
+    }
+
+    char* adjustedSteamIdString;
+
+    int adjuster = params[1];
+    pContext->LocalToString(params[2], &adjustedSteamIdString);
+
+    int volume = params[3];
+
+    // If the volume is invalid, return false
+    if (volume < 0)
+    {
+        return false;
+    }
+
+    uint64_t adjusterSteamId = GetClientSteamId(adjuster);
+    uint64_t adjustedSteamId = std::stoull(adjustedSteamIdString);
+    if (adjusterSteamId <= 0 || adjustedSteamId <= 0)
+    {
+        return false;
+    }
+
+    auto playerAdjusted = m_userOverrides.find(adjusterSteamId);
+
+    UserOverride uo;
+    uo.steamId = adjustedSteamId;
+    uo.level = volume;
+
+    if (playerAdjusted != m_userOverrides.end())
+    {
+        bool existingFound = false;
+        for (int i = 0; i < playerAdjusted->second.size(); i++)
+        {
+            if (playerAdjusted->second.at(i).steamId == adjustedSteamId)
+            {
+                playerAdjusted->second.at(i).level = uo.level;
+                existingFound = true;
+                break;
+            }
+        }
+
+        // If we did not find an existing override, push it
+        if (!existingFound)
+        {
+            playerAdjusted->second.push_back(uo);
+        }
+    }
+    else
+    {
+        m_userOverrides.insert({ adjusterSteamId, std::vector<UserOverride>{uo} });
+    }
+
     return true;
 }
 
@@ -451,6 +506,7 @@ static cell_t OnPlayerGlobalAdjust(IPluginContext* pContext, const cell_t* param
 
 const sp_nativeinfo_t g_Natives[] =
 {
+    {"LoadPlayerAdjustment", LoadPlayerAdjustment},
     {"OnPlayerAdjustVolume", OnPlayerAdjustVolume},
     {"RefreshActiveOverrides", OnRefreshActiveOverrides},
     {"ClearClientOverrides", OnClearClientOverrides},

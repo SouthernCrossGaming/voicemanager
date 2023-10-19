@@ -1,8 +1,8 @@
 
 #define MAXPLAYERS 65
 
-#define LEVEL_QUIETER -2500
-#define LEVEL_QUIET -1000
+#define LEVEL_QUIETER -3500
+#define LEVEL_QUIET -2500
 #define LEVEL_LOUD 1000
 #define LEVEL_LOUDER 2500
 #define MAX_LEVELS 4
