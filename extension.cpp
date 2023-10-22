@@ -195,6 +195,7 @@ void RefreshActiveOverrides()
                 {
                     if (override.steamId == otherClientSteamIdPair.first)
                     {
+                        // smutils->LogMessage(myself, "Adding individual override. Adjuster: %d, Adjusted: %d, Level: %d", adjuster, adjusted, override.level);
                         AddOverride(&newActiveOverrides, adjuster, adjusted, override.level);
                         adjustmentMade = true;
                         break;
@@ -215,6 +216,7 @@ void RefreshActiveOverrides()
             auto globalOverride = m_userGlobalOverrides.find(clientSteamIdPair.first);
             if (globalOverride != m_userGlobalOverrides.end())
             {
+                // smutils->LogMessage(myself, "Adding global override. Adjuster: %d, Adjusted: %d, Level: %d", adjuster, adjusted, globalOverride->second);
                 AddOverride(&newActiveOverrides, adjuster, adjusted, globalOverride->second);
             }
         }
