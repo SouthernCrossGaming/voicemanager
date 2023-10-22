@@ -3,5 +3,5 @@ obj-linux-x86_64
 ./extension/include
 .vscode
 spcomp.exe
-addons/plugins
-addons/extensions
+addons/sourcemod/plugins
+addons/sourcemod/extensions

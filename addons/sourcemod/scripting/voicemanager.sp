@@ -5,7 +5,7 @@
 #include <sdktools>
 #include <clientprefs>
 
-#define PLUGIN_VERSION "1.1.0"
+#define PLUGIN_VERSION "1.0.0"
 #define VOICE_MANAGER_PREFIX "{green}[VOICE MANAGER]{default}"
 #define TABLE_NAME "voicemanager"
 

@@ -1,4 +1,4 @@
-rmdir .\addons\plugins /s /q
-mkdir addons\plugins
+rmdir .\addons\sourcemod\plugins /s /q
+mkdir addons\sourcemod\plugins
 
-.\spcomp.exe addons\scripting\voicemanager.sp -iaddons\scripting\include -o addons\plugins\voicemanager.smx
+spcomp.exe addons\sourcemod\scripting\voicemanager.sp -iaddons\sourcemod\scripting\include -o addons\sourcemod\plugins\voicemanager.smx
