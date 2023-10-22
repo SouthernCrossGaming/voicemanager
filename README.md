@@ -1,9 +1,24 @@
 # Voice Manager
 
-A sourcemod plugin and extension that allows players to individually modify the voice volume of other players. 
+<div align="center">
+  A sourcemod plugin and extension that allows players to individually modify the voice volume of other players. 
+  </br>
+  </br>
+
+  [![Demo](https://i3.ytimg.com/vi/5lFNonAkXDQ/hqdefault.jpg)](https://youtu.be/5lFNonAkXDQ "Voice Manager Sourcemod Extension and Plugin Demo")
+</div>
 
 ## How to use
-TODO
+A player can type the command `/vm` into chat to display a menu that allows them to set volume overrides for players in the server. Overrides can be set for invidual players or globally for all players (individual overrides will take precedence).
+
+When a volume adjustment is made, all voice communications from that player will be adjusted accordingly.
+
+There are currently 5 volume levels that can be selected:
+- Normal (no change)
+- Louder
+- Loud
+- Quiet
+- Quieter
 
 ## Compatible Games
 - Team Fortress 2

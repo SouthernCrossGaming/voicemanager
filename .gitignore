@@ -5,3 +5,4 @@ obj-linux-x86_64
 spcomp.exe
 addons/sourcemod/plugins
 addons/sourcemod/extensions
+deploy_*

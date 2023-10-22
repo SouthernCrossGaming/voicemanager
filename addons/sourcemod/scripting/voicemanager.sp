@@ -205,7 +205,7 @@ public Action CommandBaseMenu(int client, int args)
 
     for (int otherClient = 1; otherClient <= MaxClients; otherClient++)
     {
-        if (IsValidClient(otherClient) && otherClient != client && !IsFakeClient(otherClient) && GetClientOverride(client, otherClient) >= 0)
+        if (IsValidClient(otherClient) && (g_Cvar_AllowSelfOverride.BoolValue || otherClient != client) && !IsFakeClient(otherClient) && GetClientOverride(client, otherClient) >= 0)
         {
             playersAdjusted++;
         }
