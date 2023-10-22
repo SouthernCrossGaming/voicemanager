@@ -1,2 +1,2 @@
-.\build_ext.bat
-.\build_plugin.bat
+./build_ext.sh
+./build_plugin.sh

@@ -2,6 +2,7 @@ build
 obj-linux-x86_64
 ./extension/include
 .vscode
+spcomp
 spcomp.exe
 addons/sourcemod/plugins
 addons/sourcemod/extensions
