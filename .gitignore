@@ -1,4 +1,7 @@
 build
 obj-linux-x86_64
-include
+./extension/include
 .vscode
+spcomp.exe
+addons/plugins
+addons/extensions
