@@ -91,7 +91,7 @@ $ .\build.bat
 
 <b>Linux</b>
 ```
-$ .\build.bat
+$ .\build.sh
 ```
 
 # Credits
