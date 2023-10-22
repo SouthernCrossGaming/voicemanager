@@ -9,7 +9,8 @@ sourceFiles = [
   'voicemanager.cpp',
   'voicemanagerclientstate.cpp',
   'CDetour/detours.cpp',
-  'asm/asm.c'
+  'asm/asm.c',
+  'libc_compat.cpp'
 ]
 
 ###############

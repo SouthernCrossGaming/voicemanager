@@ -6,8 +6,9 @@ RUN apt update && apt install -y git python3 python3-pip
 
 RUN mkdir /sdks
 RUN git clone https://github.com/alliedmodders/sourcemod --recurse-submodules -b 1.11-dev
-RUN git clone https://github.com/alliedmodders/metamod-source --recurse-submodules -b 1.10-dev
+RUN git clone https://github.com/alliedmodders/metamod-source --recurse-submodules -b 1.11-dev
 RUN git clone https://github.com/alliedmodders/hl2sdk --recurse-submodules -b tf2 /sdks/hl2sdk-tf2
+RUN git clone https://github.com/alliedmodders/hl2sdk --recurse-submodules -b sdk2013 /sdks/hl2sdk-sdk2013
 RUN git clone https://github.com/alliedmodders/ambuild --recurse-submodules
 
 RUN apt install -y \

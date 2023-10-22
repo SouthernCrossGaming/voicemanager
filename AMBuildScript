@@ -24,7 +24,7 @@ PossibleSDKs = {
   'css':  SDK('HL2SDKCSS', '2.css', '6', 'CSS', WinLinuxMac, 'css'),
   'hl2dm':  SDK('HL2SDKHL2DM', '2.hl2dm', '7', 'HL2DM', WinLinuxMac, 'hl2dm'),
   'dods': SDK('HL2SDKDODS', '2.dods', '8', 'DODS', WinLinuxMac, 'dods'),
-  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'sdk2013'),
+  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'tf2'), # Override dir to tf2 because IsHearingClient doesn't work otherwise???
   'tf2':  SDK('HL2SDKTF2', '2.tf2', '11', 'TF2', WinLinuxMac, 'tf2'),
   'l4d':  SDK('HL2SDKL4D', '2.l4d', '12', 'LEFT4DEAD', WinLinuxMac, 'l4d'),
   'nucleardawn': SDK('HL2SDKND', '2.nd', '13', 'NUCLEARDAWN', WinLinuxMac, 'nucleardawn'),
@@ -104,7 +104,7 @@ class ExtensionConfig(object):
     if builder.options.sm_path:
       self.sm_root = builder.options.sm_path
     else:
-      self.sm_root = ResolveEnvPath('SOURCEMOD18', 'sourcemod-1.8')
+      self.sm_root = ResolveEnvPath('SOURCEMOD111', 'sourcemod-1.11')
       if not self.sm_root:
         self.sm_root = ResolveEnvPath('SOURCEMOD', 'sourcemod')
       if not self.sm_root:
@@ -117,7 +117,7 @@ class ExtensionConfig(object):
     if builder.options.mms_path:
       self.mms_root = builder.options.mms_path
     else:
-      self.mms_root = ResolveEnvPath('MMSOURCE110', 'mmsource-1.10')
+      self.mms_root = ResolveEnvPath('MMSOURCE111', 'mmsource-1.11')
       if not self.mms_root:
         self.mms_root = ResolveEnvPath('MMSOURCE', 'metamod-source')
       if not self.mms_root:
@@ -174,7 +174,7 @@ class ExtensionConfig(object):
       '-Wno-array-bounds',
       '-msse',
       '-m32',
-      '-fvisibility=hidden',
+      '-fvisibility=hidden'
     ]
     cxx.cxxflags += [
       '-std=c++14',
@@ -182,7 +182,7 @@ class ExtensionConfig(object):
       '-fno-threadsafe-statics',
       '-Wno-non-virtual-dtor',
       '-Wno-overloaded-virtual',
-      '-fvisibility-inlines-hidden',
+      '-fvisibility-inlines-hidden'
     ]
     cxx.linkflags += ['-m32']
 
@@ -246,7 +246,7 @@ class ExtensionConfig(object):
       'odbc32.lib',
       'odbccp32.lib',
       'legacy_stdio_definitions.lib',
-      'D:\\ws\\sourcemod\\sourcemod\\public\\voicemanager\\include\\opus1.3.1.lib'
+      'C:\\ws\\voicemanager\\extension\\include\\opus1.3.1.lib'
     ]
 
     if builder.options.opt == '1':
@@ -262,11 +262,12 @@ class ExtensionConfig(object):
 
   def configure_linux(self, cxx):
     cxx.defines += ['_LINUX', 'POSIX']
-    cxx.linkflags += ['-Wl,--exclude-libs,ALL', '-lm', '/usr/local/lib/libopus.a']
+    cxx.linkflags += ['-Wl,--exclude-libs,ALL', '/usr/local/lib/libopus.a']
     if cxx.vendor == 'gcc':
       cxx.linkflags += ['-static-libgcc']
     elif cxx.vendor == 'clang':
       cxx.linkflags += ['-lgcc_eh']
+    cxx.linkflags += ['-lm']
 
   def configure_mac(self, cxx):
     cxx.defines += ['OSX', '_OSX', 'POSIX']
