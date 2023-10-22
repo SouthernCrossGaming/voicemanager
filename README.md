@@ -4,21 +4,24 @@
   A sourcemod plugin and extension that allows players to individually modify the voice volume of other players. 
   </br>
   </br>
-
-  [![Demo](https://i3.ytimg.com/vi/5lFNonAkXDQ/hqdefault.jpg)](https://youtu.be/5lFNonAkXDQ "Voice Manager Sourcemod Extension and Plugin Demo")
+  <h3>View Demo on YouTube
+  </br>
+  </br>
+  	
+  [![Demo](https://i3.ytimg.com/vi/5lFNonAkXDQ/maxresdefault.jpg)](https://youtu.be/5lFNonAkXDQ "Voice Manager Sourcemod Extension and Plugin Demo")
+  </h3>
 </div>
 
 ## How to use
 A player can type the command `/vm` into chat to display a menu that allows them to set volume overrides for players in the server. Overrides can be set for invidual players or globally for all players (individual overrides will take precedence).
 
+![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/b882ee1c-3e8d-4ca4-94db-0448c03f876a)
+
 When a volume adjustment is made, all voice communications from that player will be adjusted accordingly.
 
 There are currently 5 volume levels that can be selected:
-- Normal (no change)
-- Louder
-- Loud
-- Quiet
-- Quieter
+
+![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/171bb8bf-4a6c-4e0b-a7eb-fb970ec07137)
 
 ## Compatible Games
 - Team Fortress 2
@@ -48,9 +51,6 @@ For example:
 `vm_enabled` - Enables or disables voice manager (0/1, default 1)  
 `vm_database` - Database configuration to use from databases.cfg (default "voicemanager")  
 `vm_allow_self` - Allow players to override their own volume. This is recommended only for testing (0/1, default 0) 
-
-## How it works
-Player adjustments are made via a sourcemod menu by 
 
 ## Building
 
@@ -91,7 +91,7 @@ $ .\build.bat
 
 <b>Linux</b>
 ```
-$ .\build.bat
+$ .\build.sh
 ```
 
 # Credits
