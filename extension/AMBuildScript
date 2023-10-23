@@ -24,7 +24,7 @@ PossibleSDKs = {
   'css':  SDK('HL2SDKCSS', '2.css', '6', 'CSS', WinLinuxMac, 'css'),
   'hl2dm':  SDK('HL2SDKHL2DM', '2.hl2dm', '7', 'HL2DM', WinLinuxMac, 'hl2dm'),
   'dods': SDK('HL2SDKDODS', '2.dods', '8', 'DODS', WinLinuxMac, 'dods'),
-  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'tf2'), # Override dir to tf2 because OF vtables do not currently match sdk2013
+  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'sdk2013'),
   'tf2':  SDK('HL2SDKTF2', '2.tf2', '11', 'TF2', WinLinuxMac, 'tf2'),
   'l4d':  SDK('HL2SDKL4D', '2.l4d', '12', 'LEFT4DEAD', WinLinuxMac, 'l4d'),
   'nucleardawn': SDK('HL2SDKND', '2.nd', '13', 'NUCLEARDAWN', WinLinuxMac, 'nucleardawn'),
@@ -246,7 +246,7 @@ class ExtensionConfig(object):
       'odbc32.lib',
       'odbccp32.lib',
       'legacy_stdio_definitions.lib',
-      'C:\\ws\\voicemanager\\extension\\include\\opus1.3.1.lib'
+      'opus1.3.1.lib'
     ]
 
     if builder.options.opt == '1':
@@ -330,6 +330,9 @@ class ExtensionConfig(object):
       paths.append(['common'])
 
     compiler.defines += ['SOURCE_ENGINE=' + sdk.code]
+
+    if sdk.name in ['sdk2013']:
+      compiler.defines += ['REPLAY_ENABLED']
 
     if sdk.name in ['sdk2013', 'bms'] and compiler.like('gcc'):
       # The 2013 SDK already has these in public/tier0/basetypes.h
