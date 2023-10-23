@@ -67,7 +67,7 @@ Add a configuration for the voice manager database to your `addons/sourcemod/con
 
 <b>Linux</b>
 ```
-$ .\build_ext.sh
+$ ./build_ext.sh
 ```
 
 ### Build Plugin
@@ -80,7 +80,7 @@ $ .\build_ext.sh
 ```
 <b>Linux</b>
 ```
-$ .\build_plugin.sh
+$ ./build_plugin.sh
 ```
 
 ### Build Both (same requirements as above)
@@ -92,7 +92,7 @@ $ .\build_plugin.sh
 
 <b>Linux</b>
 ```
-$ .\build.sh
+$ ./build.sh
 ```
 
 ## VS Code Setup
@@ -115,3 +115,6 @@ To setup C++ includes for VS Code, clone sourcemod, metamod, and the tf2 sdk. In
 - [Fraeven](https://fraeven.dev) (Extension Code, Plugin Code, Testing)
 - [Rowedahelicon](https://rowdythecrux.dev) (Plugin Code, Debugging Assistance, Testing)
 - Many members of the SCG community (Testing)
+
+# AlliedModders Thread
+https://forums.alliedmods.net/showthread.php?t=344276
