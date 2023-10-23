@@ -15,13 +15,13 @@
 ## How To Use
 A player can type the command `/vm` into chat to display a menu that allows them to set volume overrides for players in the server. Overrides can be set for invidual players or globally for all players (individual overrides will take precedence).
 
-![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/b882ee1c-3e8d-4ca4-94db-0448c03f876a)
+![277191737-b882ee1c-3e8d-4ca4-94db-0448c03f876a](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/be666240-5ae6-42d3-9073-d8ebdb23d9ac)
 
 When a volume adjustment is made, all voice communications from that player will be adjusted accordingly.
 
 There are currently 5 volume levels that can be selected:
 
-![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/171bb8bf-4a6c-4e0b-a7eb-fb970ec07137)
+![277191747-171bb8bf-4a6c-4e0b-a7eb-fb970ec07137](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/66ae51c2-fb66-4315-8a07-16052b76a2fa)
 
 ## Requirements
 
