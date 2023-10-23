@@ -48,7 +48,7 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
     g_Cvar_VoiceEnable = FindConVar("vm_enable");
-    g_Cvar_Database = CreateConVar("vm_database", "voicemanager", "Database configuration to use from databases.cfg");
+    g_Cvar_Database = CreateConVar("vm_database", "default", "Database configuration to use from databases.cfg");
     g_Cvar_AllowSelfOverride = CreateConVar("vm_allow_self", "0", "Allow players to override their own volume (recommended only for testing)");
 
     RegConsoleCmd("sm_vm", CommandBaseMenu);

@@ -4,7 +4,7 @@
   A sourcemod plugin and extension that allows players to individually modify the voice volume of other players. 
   </br>
   </br>
-  <h3>View Demo on YouTube
+  <h3><a href=https://youtu.be/5lFNonAkXDQ>View Demo on YouTube</a>
   </br>
   </br>
   	
@@ -40,7 +40,7 @@ There are currently 5 volume levels that can be selected:
 ## Installation
 Download the [latest release](https://github.com/SouthernCrossGaming/voicemanager/releases/latest/download/voicemanager.zip), unzip and copy to your `addons` directory.
 
-Add a configuration for the voice manager database to your `addons/sourcemod/configs/databases.cfg` file.
+Add a configuration for the voice manager database to your `addons/sourcemod/configs/databases.cfg` file (voice manager will use the "default" configuration otherwise)
 
 For example:
 ```
@@ -53,8 +53,12 @@ For example:
 
 ## Configuration
 `vm_enabled` - Enables or disables voice manager (0/1, default 1)  
-`vm_database` - Database configuration to use from databases.cfg (default "voicemanager")  
+`vm_database` - Database configuration to use from databases.cfg (default is "default")  
 `vm_allow_self` - Allow players to override their own volume. This is recommended only for testing (0/1, default 0) 
+
+## Commands
+`/vm` | `/voicemanager` - Opens the Voice Manager menu  
+`/vmclear` - Clears the player's overrides from the database
 
 ## Building
 
