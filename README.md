@@ -25,9 +25,11 @@ There are currently 5 volume levels that can be selected:
 
 ## Requirements
 
-### Compatible Games
+### Supported Games*
 - Team Fortress 2
 - Open Fortress
+
+<sub>* Voice Manager would likely work with any game that supports the steam voice codec. I would be happy to add support for other games by request so long as testing assistance for said game is provided.</sub>
 
 ### Supported Platforms
 - Linux
