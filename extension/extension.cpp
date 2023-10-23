@@ -423,43 +423,6 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
     return true;
 }
 
-static cell_t AdminPrintVmStatus(IPluginContext* pContext, const cell_t* params)
-{
-    if (!vm_enable.GetBool())
-    {
-        return false;
-    }
-
-    return true;
-
-    // TODO
-    // int client = params[1];
-
-    // std::string msg;
-    // for (auto overrideLevel : g_activeOverrides)
-    // {
-    //     for (auto overrides : overrideLevel.second)
-    //     {
-    //         int adjusted = overrides.first;
-    //         char buffer[1024];
-    //         // std::string adjusters = "";
-    //         // for (auto adjuster : overrides.second.clients)
-    //         // {
-    //         //     adjusters = adjusters + ", " + playerhelpers->GetGamePlayer(adjuster)->GetName();
-    //         // }
-
-    //         //playerhelpers->GetGamePlayer(adjusted)->GetName()
-    //         std::snprintf(buffer, sizeof(buffer), "Level: %i, Adjusted: %i", overrideLevel.first, adjusted);
-    //         msg = msg + "\n" + buffer;
-    //     }
-    // }
-
-    // smutils->LogError(myself, msg.c_str());
-
-    // g_SMAPI->ClientConPrintf(engine->PEntityOfEntIndex(client), msg.c_str());
-    // return true;
-}
-
 static cell_t OnPlayerGlobalAdjust(IPluginContext* pContext, const cell_t* params)
 {
     if (!vm_enable.GetBool())
@@ -514,7 +477,6 @@ const sp_nativeinfo_t g_Natives[] =
     {"ClearClientOverrides", OnClearClientOverrides},
     {"GetClientOverride", OnGetClientOverride},
     {"OnPlayerGlobalAdjust", OnPlayerGlobalAdjust},
-    {"AdminPrintVmStatus", AdminPrintVmStatus},
     {nullptr, nullptr},
 };
 
