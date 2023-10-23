@@ -12,7 +12,7 @@
   </h3>
 </div>
 
-## How to use
+## How To Use
 A player can type the command `/vm` into chat to display a menu that allows them to set volume overrides for players in the server. Overrides can be set for invidual players or globally for all players (individual overrides will take precedence).
 
 ![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/b882ee1c-3e8d-4ca4-94db-0448c03f876a)
