@@ -38,6 +38,9 @@ There are currently 5 volume levels that can be selected:
 ### Supported Database Drivers
 - mysql
 - sqlite
+  
+### Supported Voice Codecs
+- steam (`sv_voicecodec steam`)
 
 ## Installation
 Download the [latest release](https://github.com/SouthernCrossGaming/voicemanager/releases/latest/download/voicemanager.zip), unzip and copy to your `addons` directory.
