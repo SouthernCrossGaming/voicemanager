@@ -20,8 +20,6 @@ native bool OnPlayerGlobalAdjust(int caller, int volume);
 
 native bool RefreshActiveOverrides();
 
-native bool AdminPrintVmStatus(int caller);
-
 /**
  * Clears all overrides a client has set
  *

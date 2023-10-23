@@ -4,7 +4,7 @@
   A sourcemod plugin and extension that allows players to individually modify the voice volume of other players. 
   </br>
   </br>
-  <h3>View Demo on YouTube
+  <h3><a href=https://youtu.be/5lFNonAkXDQ>View Demo on YouTube</a>
   </br>
   </br>
   	
@@ -12,7 +12,7 @@
   </h3>
 </div>
 
-## How to use
+## How To Use
 A player can type the command `/vm` into chat to display a menu that allows them to set volume overrides for players in the server. Overrides can be set for invidual players or globally for all players (individual overrides will take precedence).
 
 ![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/b882ee1c-3e8d-4ca4-94db-0448c03f876a)
@@ -23,38 +23,35 @@ There are currently 5 volume levels that can be selected:
 
 ![image](https://github.com/SouthernCrossGaming/voicemanager/assets/20617130/171bb8bf-4a6c-4e0b-a7eb-fb970ec07137)
 
-## Compatible Games
+## Requirements
+
+### Compatible Games
 - Team Fortress 2
 - Open Fortress
 
-## Supported Platforms
+### Supported Platforms
 - Linux
 
-## Sourcemod
+### Sourcemod
 - Version 1.10+
 
-## Supported Database Drivers
-- sqlite
+### Supported Database Drivers
 - mysql
+- sqlite
 
 ## Installation
 Download the [latest release](https://github.com/SouthernCrossGaming/voicemanager/releases/latest/download/voicemanager.zip), unzip and copy to your `addons` directory.
 
-Add a configuration for the voice manager database to your `addons/sourcemod/configs/databases.cfg` file.
-
-For example:
-```
-	"voicemanager"
-	{
-		"driver" "sqlite"
-		"database" "voicemanager"
-	}
-```
+Add a configuration for the voice manager database to your `addons/sourcemod/configs/databases.cfg` file. Note that voice manager will use the "default" configuration by default, but this can be configured via cvar, see below.
 
 ## Configuration
 `vm_enabled` - Enables or disables voice manager (0/1, default 1)  
-`vm_database` - Database configuration to use from databases.cfg (default "voicemanager")  
+`vm_database` - Database configuration to use from databases.cfg (default is "default")  
 `vm_allow_self` - Allow players to override their own volume. This is recommended only for testing (0/1, default 0) 
+
+## Commands
+`/vm` | `/voicemanager` - Opens the Voice Manager menu  
+`/vmclear` - Clears the player's overrides from the database
 
 ## Building
 
@@ -65,7 +62,7 @@ For example:
 
 <b>Windows</b>
 ```
-$ .\build_ext.bat
+> .\build_ext.bat
 ```
 
 <b>Linux</b>
@@ -79,7 +76,7 @@ $ .\build_ext.sh
 
 <b>Windows</b>
 ```
-$ .\build_plugin.bat
+> .\build_plugin.bat
 ```
 <b>Linux</b>
 ```
@@ -90,7 +87,7 @@ $ .\build_plugin.sh
 
 <b>Windows</b>
 ```
-$ .\build.bat
+> .\build.bat
 ```
 
 <b>Linux</b>

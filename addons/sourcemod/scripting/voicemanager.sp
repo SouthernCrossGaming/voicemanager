@@ -5,9 +5,10 @@
 #include <sdktools>
 #include <clientprefs>
 
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.0.1"
 #define VOICE_MANAGER_PREFIX "{green}[VOICE MANAGER]{default}"
 #define TABLE_NAME "voicemanager"
+#define STEAM_ID_BUF_SIZE 18
 
 #pragma newdecls required
 
@@ -47,13 +48,12 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
     g_Cvar_VoiceEnable = FindConVar("vm_enable");
-    g_Cvar_Database = CreateConVar("vm_database", "voicemanager", "Database configuration to use from databases.cfg");
+    g_Cvar_Database = CreateConVar("vm_database", "default", "Database configuration to use from databases.cfg");
     g_Cvar_AllowSelfOverride = CreateConVar("vm_allow_self", "0", "Allow players to override their own volume (recommended only for testing)");
 
     RegConsoleCmd("sm_vm", CommandBaseMenu);
     RegConsoleCmd("sm_voicemanager", CommandBaseMenu);
-    RegConsoleCmd("sm_vmclear", OnClearClientOverrides);
-    RegAdminCmd("sm_vmcheck", CommandAdminCheck, ADMFLAG_KICK, "Checks volume override levels");
+    RegConsoleCmd("sm_vmclear", Command_ClearClientOverrides);
 
     HookConVarChange(g_Cvar_VoiceEnable, OnVoiceEnableChanged);
 
@@ -95,11 +95,20 @@ public void T_InitDatabase(Handle owner, Handle hndl, const char[] error, any da
         SetFailState("Unsupported database driver %s", g_sDriver);
     }
 
-    // Add voicemanager table
+    // Add voicemanager table if it does not exist
     char szQuery[511];
     Format(szQuery, sizeof(szQuery), "CREATE TABLE IF NOT EXISTS `%s` (adjuster VARCHAR(64), adjusted VARCHAR(64), level TINYINT, PRIMARY KEY (adjuster, adjusted))", TABLE_NAME);
 
     SQL_TQuery(g_hDatabase, SQLErrorCheckCallback, szQuery);
+
+    for (int client = 1; client <= MaxClients; client++)
+    {
+        if (IsValidClient(client))
+        {
+            OnClientPostAdminCheck(client);
+            OnClientCookiesCached(client);
+        }
+    }
 }
 
 public void OnVoiceEnableChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -114,29 +123,20 @@ public void OnClientPostAdminCheck(int client)
         return;
     }
 
-    // Adding list from database
-    char szBuffer[255];
-    char szSteamID[18];
-
+    char szSteamID[STEAM_ID_BUF_SIZE];
     GetClientAuthId(client, AuthId_SteamID64, szSteamID, sizeof(szSteamID));
-    int buffer_len = strlen(szSteamID) * 2 + 1;
-    char[] steam_id = new char[buffer_len];
 
-    SQL_EscapeString(g_hDatabase, szSteamID, steam_id, buffer_len);
-
-    LogMessage("[VoiceManager] Adjuster: %s - %s", szSteamID, steam_id);
-
-    FormatEx(szBuffer, sizeof(szBuffer), "SELECT adjusted, level FROM %s WHERE adjuster = '%s'", TABLE_NAME, steam_id);
-    SQL_TQuery(g_hDatabase, T_LoadAdjustments, szBuffer, client);
+    // Load adjustments from database
+    char szQueryBuffer[255];
+    FormatEx(szQueryBuffer, sizeof(szQueryBuffer), "SELECT adjusted, level FROM `%s` WHERE adjuster = '%s'", TABLE_NAME, szSteamID);
+    SQL_TQuery(g_hDatabase, T_LoadAdjustments, szQueryBuffer, client);
 }
 
 public void T_LoadAdjustments(Handle owner, Handle hndl, const char[] error, int client)
 {
-    LogMessage("[VoiceManager] Loading player adjustments");
-
-    if (hndl == INVALID_HANDLE)
+    if (hndl == INVALID_HANDLE || strlen(error) > 1)
     {
-        LogError("Query failed! %s", error);
+        LogError("[VoiceManager] Failed to load adjustments: %s", error);
         return;
     }
 
@@ -145,12 +145,10 @@ public void T_LoadAdjustments(Handle owner, Handle hndl, const char[] error, int
         while (SQL_FetchRow(hndl))
         {
             // Fetch adjusted steam ids with levels from SQL
-            char adjustedSteamId[18];
-            int level;
+            char adjustedSteamId[STEAM_ID_BUF_SIZE];
             SQL_FetchString(hndl, 0, adjustedSteamId, sizeof(adjustedSteamId));
-            level = SQL_FetchInt(hndl, 1);
 
-            LogMessage("[VoiceManager] Adjust for %N: %s - %i", client, adjustedSteamId, level);
+            int level = SQL_FetchInt(hndl, 1);
 
             LoadPlayerAdjustment(client, adjustedSteamId, level);
         }
@@ -183,12 +181,6 @@ public void OnClientDisconnect(int client)
     {
         RefreshActiveOverrides();
     }
-}
-
-public Action CommandAdminCheck(int client, int args)
-{
-    AdminPrintVmStatus(client);
-    return Plugin_Handled;
 }
 
 // Menus
@@ -322,17 +314,40 @@ public int BaseMenuHandler(Menu menu, MenuAction action, int client, int param2)
     return 0;
 }
 
-public Action OnClearClientOverrides(int client, int args)
+public Action Command_ClearClientOverrides(int client, int args)
 {
     if (!g_Cvar_VoiceEnable.BoolValue)
     {
         return Plugin_Handled;
     }
 
+    char szSteamID[STEAM_ID_BUF_SIZE];
+    GetClientAuthId(client, AuthId_SteamID64, szSteamID, sizeof(szSteamID));
+
+    char szQuery[511];
+    FormatEx(szQuery, sizeof(szQuery), "DELETE FROM `%s` WHERE adjuster = '%s'", TABLE_NAME, szSteamID);
+    SQL_TQuery(g_hDatabase, SQLErrorCheckCallback, szQuery);
+
     ClearClientOverrides(client);
+
     CPrintToChat(client, "%s You have cleared all of your voice overrides!", VOICE_MANAGER_PREFIX);
 
     return Plugin_Handled;
+
+}
+
+public void OnClearClientOverrides(int client)
+{
+    char szSteamID[STEAM_ID_BUF_SIZE];
+    GetClientAuthId(client, AuthId_SteamID64, szSteamID, sizeof(szSteamID));
+
+    char szQuery[511];
+    FormatEx(szQuery, sizeof(szQuery), "DELETE FROM `%s` WHERE adjuster = '%s'", TABLE_NAME, szSteamID);
+    SQL_TQuery(g_hDatabase, SQLErrorCheckCallback, szQuery);
+
+    ClearClientOverrides(client);
+
+    CPrintToChat(client, "%s You have cleared all of your voice overrides!", VOICE_MANAGER_PREFIX);
 }
 
 //Handlers
@@ -378,7 +393,7 @@ public int VoiceMenuHandler(Menu menu, MenuAction action, int param1, int param2
     return 0;
 }
 
-public int ClearMenuHandler(Menu menu, MenuAction action, int param1, int param2)
+public int ClearMenuHandler(Menu menu, MenuAction action, int client, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -387,11 +402,11 @@ public int ClearMenuHandler(Menu menu, MenuAction action, int param1, int param2
         int yes = StringToInt(info);
         if (yes)
         {
-            ClearClientOverrides(param1);
+            OnClearClientOverrides(client);
         }
         else
         {
-            CommandBaseMenu(param1, 0);
+            CommandBaseMenu(client, 0);
         }
     }
     else if (action == MenuAction_End)
@@ -402,7 +417,7 @@ public int ClearMenuHandler(Menu menu, MenuAction action, int param1, int param2
     return 0;
 }
 
-public int VoiceVolumeHandler(Menu menu, MenuAction action, int param1, int param2)
+public int VoiceVolumeHandler(Menu menu, MenuAction action, int client, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -412,27 +427,23 @@ public int VoiceVolumeHandler(Menu menu, MenuAction action, int param1, int para
         if (found)
         {
             int level = StringToInt(info);
-            if (!OnPlayerAdjustVolume(param1, g_iSelection[param1], level))
+            if (!OnPlayerAdjustVolume(client, g_iSelection[client], level))
             {
-                CPrintToChat(param1, "%s Something went wrong, please try again soon!", VOICE_MANAGER_PREFIX);
+                CPrintToChat(client, "%s Something went wrong, please try again soon!", VOICE_MANAGER_PREFIX);
             }
             else
             {
-                CPrintToChat(param1, "%s %N's level is now set to %s.", VOICE_MANAGER_PREFIX, g_iSelection[param1], setting);
+                CPrintToChat(client, "%s %N's level is now set to %s.", VOICE_MANAGER_PREFIX, g_iSelection[client], setting);
             }
 
-            char adjuster[18], adjusted[18];
-            GetClientAuthId(param1, AuthId_SteamID64, adjuster, sizeof(adjuster));
-            GetClientAuthId(g_iSelection[param1], AuthId_SteamID64, adjusted, sizeof(adjusted));
-
-            SQL_EscapeString(g_hDatabase, adjuster, adjuster, sizeof(adjuster));
-            SQL_EscapeString(g_hDatabase, adjusted, adjusted, sizeof(adjusted));
+            char adjuster[STEAM_ID_BUF_SIZE], adjusted[STEAM_ID_BUF_SIZE];
+            GetClientAuthId(client, AuthId_SteamID64, adjuster, sizeof(adjuster));
+            GetClientAuthId(client, AuthId_SteamID64, adjusted, sizeof(adjusted));
 
             char szQuery[511];
-
             if (level == -1)
             {
-                FormatEx(szQuery, sizeof(szQuery), "DELETE FROM %s WHERE adjuster = '%s' AND adjusted = '%s'", TABLE_NAME, adjuster, adjusted);
+                FormatEx(szQuery, sizeof(szQuery), "DELETE FROM `%s` WHERE adjuster = '%s' AND adjusted = '%s'", TABLE_NAME, adjuster, adjusted);
                 SQL_TQuery(g_hDatabase, SQLErrorCheckCallback, szQuery);
             }
             else
@@ -471,13 +482,13 @@ public int VoiceVolumeHandler(Menu menu, MenuAction action, int param1, int para
 
 public void SQLErrorCheckCallback(Handle owner, Handle hndl, const char[] error, any data)
 {
-    if (strlen(error) > 1)
+    if (hndl == INVALID_HANDLE || strlen(error) > 1)
     {
-        LogMessage("[VoiceManager] SQL Error: %s", error);
+        LogError("[VoiceManager] SQL Error: %s", error);
     }
 }
 
-public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int param1, int param2)
+public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int client, int param2)
 {
     if (action == MenuAction_Select)
     {
@@ -487,15 +498,15 @@ public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int param1, in
         if (found)
         {
             int volume = StringToInt(info);
-            if (!OnPlayerGlobalAdjust(param1, volume))
+            if (!OnPlayerGlobalAdjust(client, volume))
             {
-                CPrintToChat(param1, "%s Something went wrong, please try again soon!", VOICE_MANAGER_PREFIX);
+                CPrintToChat(client, "%s Something went wrong, please try again soon!", VOICE_MANAGER_PREFIX);
             }
             else
             {
-                CPrintToChat(param1, "%s Global voice volume is now set to %s.", VOICE_MANAGER_PREFIX, setting);
-                SetClientCookie(param1, g_Cookie_GlobalOverride, info);
-                g_iCookieSelection[param1] = volume;
+                CPrintToChat(client, "%s Global voice volume is now set to %s.", VOICE_MANAGER_PREFIX, setting);
+                SetClientCookie(client, g_Cookie_GlobalOverride, info);
+                g_iCookieSelection[client] = volume;
             }
         }
     }
@@ -503,7 +514,7 @@ public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int param1, in
     {
         if (param2 == MenuCancel_ExitBack)
         {
-            CommandBaseMenu(param1, 0);
+            CommandBaseMenu(client, 0);
         }
     }
     else if (action == MenuAction_End)
@@ -513,7 +524,6 @@ public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int param1, in
 
     return 0;
 }
-
 
 stock bool IsValidClient(int client)
 {
