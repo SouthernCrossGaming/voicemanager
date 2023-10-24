@@ -1,4 +1,5 @@
-rmdir .\addons\sourcemod\extensions /s /q
+DEL addons\sourcemod\extensions\voicemanager.ext.2.sdk2013.so
+DEL addons\sourcemod\extensions\voicemanager.ext.2.tf2.so
 
 cd extension
 rmdir .\build /s /q
