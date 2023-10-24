@@ -9,8 +9,7 @@ sourceFiles = [
   'voicemanager.cpp',
   'voicemanagerclientstate.cpp',
   'CDetour/detours.cpp',
-  'asm/asm.c',
-  'libc_compat.cpp'
+  'asm/asm.c'
 ]
 
 ###############
@@ -29,6 +28,9 @@ else:
 project.sources += sourceFiles
 
 for sdk_name in Extension.sdks:
+  if sdk_name in ['sdk2013'] and builder.target_platform == 'linux':
+    project.sources += 'libc_compat.cpp'
+
   sdk = Extension.sdks[sdk_name]
 
   binary = Extension.HL2Config(project, projectName + '.ext.' + sdk.ext, sdk)

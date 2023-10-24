@@ -9,4 +9,3 @@ services:
     volumes:
       - .:C:\extension
     working_dir: C:\extension
-    user: ContainerAdministrator

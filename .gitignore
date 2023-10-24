@@ -5,5 +5,5 @@ obj-linux-x86_64
 spcomp
 spcomp.exe
 addons/sourcemod/plugins
-addons/sourcemod/extensions
+addons/sourcemod/extensions/voicemanager.ext*
 deploy_*
