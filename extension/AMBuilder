@@ -29,7 +29,7 @@ project.sources += sourceFiles
 
 for sdk_name in Extension.sdks:
   if sdk_name in ['sdk2013'] and builder.target_platform == 'linux':
-    project.sources += 'libc_compat.cpp'
+    project.sources += ['libc_compat.cpp']
 
   sdk = Extension.sdks[sdk_name]
 
