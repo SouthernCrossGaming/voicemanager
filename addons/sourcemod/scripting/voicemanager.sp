@@ -5,7 +5,7 @@
 #include <sdktools>
 #include <clientprefs>
 
-#define PLUGIN_VERSION "1.0.1"
+#define PLUGIN_VERSION "1.0.2"
 #define VOICE_MANAGER_PREFIX "{green}[VOICE MANAGER]{default}"
 #define TABLE_NAME "voicemanager"
 #define STEAM_ID_BUF_SIZE 18
