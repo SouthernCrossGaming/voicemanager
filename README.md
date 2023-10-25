@@ -33,6 +33,7 @@ There are currently 5 volume levels that can be selected:
 
 ### Supported Platforms
 - Linux
+- Windows
 
 ### Sourcemod
 - Version 1.10+
@@ -60,61 +61,61 @@ Add a configuration for the voice manager database to your `addons/sourcemod/con
 
 ## Building
 
-### Build Extension
+### Build Extension for Linux
 
-<b>Requirements:</b>
-- Docker / docker compose
-
-<b>Windows</b>
+*Requires Docker (with docker compose) using <b>Linux</b> containers
 ```
 > .\build_ext.bat
 ```
-
-<b>Linux</b>
 ```
 $ ./build_ext.sh
 ```
 
-### Build Plugin
-<b>Requirements:</b>
-- spcomp (1.10 or higher) added to your path or to the base directory
+### Build Extension for Windows
 
-<b>Windows</b>
+*Requires Windows environment with Docker (with docker compose) using <b>Windows</b> containers
+```
+> .\build_ext_windows.bat
+```
+
+### Build Plugin
+*Requires spcomp (1.10 or higher) added to your path or to the base directory
 ```
 > .\build_plugin.bat
 ```
-<b>Linux</b>
 ```
 $ ./build_plugin.sh
 ```
 
-### Build Both (same requirements as above)
-
-<b>Windows</b>
+### Build All (Windows environment only)
 ```
 > .\build.bat
 ```
 
-<b>Linux</b>
-```
-$ ./build.sh
-```
-
 ## VS Code Setup
 To setup C++ includes for VS Code, clone sourcemod, metamod, and the tf2 sdk. Include the following paths:
-- ./
-- ./include
-- <sm_path>
-- <sm_path>\public
-- <sm_path>\public\extensions
-- <sm_path>\sourcepawn\include
-- <sm_path>\sourcepawn\third_party\amtl
-- <sm_path>\sourcepawn\third_party\amtl\amtl
-- <mm_path>\core
-- <mm_path>\core\sourcehook
-- <hl2sdk-tf2_path>\public
-- <hl2sdk-tf2_path>\public\tier0
-- <hl2sdk-tf2_path>\public\tier1
+- `./`
+- `./include`
+- `<sm_path>`
+- `<sm_path>\public`
+- `<sm_path>\public\extensions`
+- `<sm_path>\sourcepawn\include`
+- `<sm_path>\sourcepawn\third_party\amtl`
+- `<sm_path>\sourcepawn\third_party\amtl\amtl`
+- `<mm_path>\core`
+- `<mm_path>\core\sourcehook`
+- `<hl2sdk-tf2_path>\public`
+- `<hl2sdk-tf2_path>\public\tier0`
+- `<hl2sdk-tf2_path>\public\tier1`
+
+### Troubleshooting
+- <b>Problem</b>: The VoiceManager plugin/extension did not load.
+- <b>Potential Solution</b>: Check for any errors on startup and ensure that an empty `voicemanager.autoload` file exists under the `addons/sourcemod/extension` directory.
+
+</br>
+
+* <b>Problem</b>: When an adjustment is applied, there are no errors but the player does not have any voice output.  
+* <b>Potential Solution</b>: Make sure the server is using the `steam` voice codec (`sv_voicecodec steam`)
 
 # Credits
 - [Fraeven](https://fraeven.dev) (Extension Code, Plugin Code, Testing)

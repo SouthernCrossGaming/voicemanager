@@ -1,0 +1,34 @@
+# escape=`
+
+FROM mcr.microsoft.com/windows/server:ltsc2022
+
+# Reset the shell.
+SHELL ["cmd", "/S", "/C"]
+
+# Download channel for fixed install.
+ADD https://aka.ms/vs/17/release/channel C:\TEMP\VisualStudio.chman
+
+# Download and install Build Tools for Visual Studio 2022 for native desktop workload.
+ADD https://aka.ms/vs/17/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
+RUN C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --nocache `
+    --channelUri C:\TEMP\VisualStudio.chman `
+    --installChannelUri C:\TEMP\VisualStudio.chman `
+    --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended`
+    --installPath C:\BuildTools
+
+RUN PowerShell Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+RUN choco install -y `
+    git `
+    python
+
+RUN mkdir C:\sdks
+RUN git clone https://github.com/alliedmodders/sourcemod --recurse-submodules -b 1.11-dev
+RUN git clone https://github.com/alliedmodders/metamod-source --recurse-submodules -b 1.11-dev
+RUN git clone https://github.com/alliedmodders/hl2sdk --recurse-submodules -b tf2 C:\sdks\hl2sdk-tf2
+RUN git clone https://github.com/alliedmodders/hl2sdk --recurse-submodules -b sdk2013 C:\sdks\hl2sdk-sdk2013
+RUN git clone https://github.com/alliedmodders/ambuild --recurse-submodules
+
+COPY scripts\setup.py C:\ambuild\setup.py
+RUN pip install C:\ambuild
+
+ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat && C:\extension\scripts\build.bat

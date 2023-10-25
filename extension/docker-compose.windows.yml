@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  extension-build-windows:
+    build:
+      context: .
+      dockerfile: Dockerfile.windows
+    image: extension-build-windows
+    volumes:
+      - .:C:\extension
+    working_dir: C:\extension
