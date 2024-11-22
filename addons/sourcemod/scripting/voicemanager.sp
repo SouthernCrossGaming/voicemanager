@@ -118,7 +118,7 @@ public void OnVoiceEnableChanged(ConVar convar, const char[] oldValue, const cha
 
 public void OnClientPostAdminCheck(int client)
 {
-    if (!g_Cvar_VoiceEnable.BoolValue)
+    if (!g_Cvar_VoiceEnable.BoolValue  || !IsValidClient(client))
     {
         return;
     }
@@ -527,7 +527,7 @@ public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int client, in
 
 stock bool IsValidClient(int client)
 {
-    if (!client || client > MaxClients || client < 1 || !IsClientInGame(client))
+    if (!client || client > MaxClients || client < 1 || !IsClientInGame(client) || IsClientReplay(client))
     {
         return false;
     }
