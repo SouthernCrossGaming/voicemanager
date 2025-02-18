@@ -2,7 +2,7 @@
 * vim: set ts=4 :
 * =============================================================================
 * SourceMod
-* Copyright (C) 2004-2008 AlliedModders LLC.  All rights reserved.
+* Copyright (C) 2004-2010 AlliedModders LLC.  All rights reserved.
 * =============================================================================
 *
 * This program is free software; you can redistribute it and/or modify it under
@@ -32,7 +32,7 @@
 #ifndef _INCLUDE_SOURCEMOD_DETOURS_H_
 #define _INCLUDE_SOURCEMOD_DETOURS_H_
 
-#include "../extension.h"
+#include "extension.h"
 #include <jit/jit_helpers.h>
 #include <jit/x86/x86_macros.h>
 #include "detourhelpers.h"
@@ -57,61 +57,32 @@ ret (*name##_Actual)(p1type) = NULL; \
 ret name(p1type p1name)
 
 #define DETOUR_DECL_STATIC2(name, ret, p1type, p1name, p2type, p2name) \
-	ret (*name##_Actual)(p1type, p2type) = NULL; \
-	ret name(p1type p1name, p2type p2name)
-
+ret (*name##_Actual)(p1type, p2type) = NULL; \
+ret name(p1type p1name, p2type p2name)
 
 #define DETOUR_DECL_STATIC3(name, ret, p1type, p1name, p2type, p2name, p3type, p3name) \
-	ret (*name##_Actual)(p1type, p2type, p3type) = NULL; \
-	ret name(p1type p1name, p2type p2name, p3type p3name)
+ret (*name##_Actual)(p1type, p2type, p3type) = NULL; \
+ret name(p1type p1name, p2type p2name, p3type p3name)
 
 #define DETOUR_DECL_STATIC4(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name) \
-	ret (*name##_Actual)(p1type, p2type, p3type, p4type) = NULL; \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name)
+ret (*name##_Actual)(p1type, p2type, p3type, p4type) = NULL; \
+ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name)
 
 #define DETOUR_DECL_STATIC5(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name) \
-	ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type) = NULL; \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name)
+ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type) = NULL; \
+ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name)
 
 #define DETOUR_DECL_STATIC6(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name) \
-	ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type) = NULL; \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name)
+ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type) = NULL; \
+ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name)
 
 #define DETOUR_DECL_STATIC7(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name, p7type, p7name) \
-	ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type) = NULL; \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name)
+ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type) = NULL; \
+ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name)
 
-#define DETOUR_DECL_STATIC0_fastcall(name, ret) \
-	ret (__fastcall *name##_Actual)(void) = NULL; \
-	ret __fastcall name(void)
-
-#define DETOUR_DECL_STATIC1_fastcall(name, ret, p1type, p1name) \
-	ret (__fastcall *name##_Actual)(p1type) = NULL; \
-	ret __fastcall name(p1type p1name)
-
-#define DETOUR_DECL_STATIC2_fastcall(name, ret, p1type, p1name, p2type, p2name) \
-	ret (__fastcall *name##_Actual)(p1type, p2type) = NULL; \
-	ret __fastcall name(p1type p1name, p2type p2name)
-
-#define DETOUR_DECL_STATIC3_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name) \
-	ret (__fastcall *name##_Actual)(p1type, p2type, p3type) = NULL; \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name)
-
-#define DETOUR_DECL_STATIC4_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name) \
-	ret (__fastcall *name##_Actual)(p1type, p2type, p3type, p4type) = NULL; \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name, p4type p4name)
-
-#define DETOUR_DECL_STATIC5_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name) \
-	ret (__fastcall *name##_Actual)(p1type, p2type, p3type, p4type, p5type) = NULL; \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name)
-
-#define DETOUR_DECL_STATIC6_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name) \
-	ret (__fastcall *name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type) = NULL; \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name)
-
-#define DETOUR_DECL_STATIC7_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name, p7type, p7name) \
-	ret (__fastcall *name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type) = NULL; \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name)
+#define DETOUR_DECL_STATIC8(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name, p7type, p7name, p8type, p8name) \
+ret (*name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type) = NULL; \
+ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name)
 
 #define DETOUR_DECL_MEMBER0(name, ret) \
 class name##Class \
@@ -157,8 +128,8 @@ ret name##Class::name(p1type p1name, p2type p2name, p3type p3name)
 class name##Class \
 { \
 public: \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name); \
-	static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type); \
+        ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name); \
+        static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type); \
 }; \
 ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type) = NULL; \
 ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name)
@@ -167,18 +138,28 @@ ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name
 class name##Class \
 { \
 public: \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name); \
-	static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type); \
+        ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name); \
+        static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type); \
 }; \
 ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type) = NULL; \
 ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name)
+
+#define DETOUR_DECL_MEMBER6(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name) \
+class name##Class \
+{ \
+public: \
+        ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name); \
+        static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type); \
+}; \
+ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type) = NULL; \
+ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name)
 
 #define DETOUR_DECL_MEMBER7(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name, p7type, p7name) \
 class name##Class \
 { \
 public: \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name); \
-	static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type); \
+        ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name); \
+        static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type); \
 }; \
 ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type) = NULL; \
 ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name)
@@ -187,91 +168,12 @@ ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name
 class name##Class \
 { \
 public: \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name); \
-	static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type); \
+        ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name); \
+        static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type); \
 }; \
 ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type) = NULL; \
 ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name)
 
-#define DETOUR_DECL_MEMBER9(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name, p7type, p7name, p8type, p8name, p9type, p9name) \
-class name##Class \
-{ \
-public: \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name, p9type p9name); \
-	static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type, p9type); \
-}; \
-ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type, p9type) = NULL; \
-ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name, p9type p9name)
-
-#define DETOUR_DECL_MEMBER10(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name, p6type, p6name, p7type, p7name, p8type, p8name, p9type, p9name, p10type, p10name) \
-class name##Class \
-{ \
-public: \
-	ret name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name, p9type p9name, p10type p10name); \
-	static ret (name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type, p9type, p10type); \
-}; \
-ret (name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type, p6type, p7type, p8type, p9type, p10type) = NULL; \
-ret name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name, p6type p6name, p7type p7name, p8type p8name, p9type p9name, p10type p10name)
-
-#define DETOUR_DECL_MEMBER0_fastcall(name, ret) \
-class name##Class \
-{ \
-public: \
-	ret __fastcall name(); \
-	static ret (__fastcall name##Class::* name##_Actual)(void); \
-}; \
-ret (__fastcall name##Class::* name##Class::name##_Actual)(void) = NULL; \
-ret __fastcall name##Class::name()
-
-#define DETOUR_DECL_MEMBER1_fastcall(name, ret, p1type, p1name) \
-class name##Class \
-{ \
-public: \
-	ret __fastcall name(p1type p1name); \
-	static ret (__fastcall name##Class::* name##_Actual)(p1type); \
-}; \
-ret (__fastcall name##Class::* name##Class::name##_Actual)(p1type) = NULL; \
-ret __fastcall name##Class::name(p1type p1name)
-
-#define DETOUR_DECL_MEMBER2_fastcall(name, ret, p1type, p1name, p2type, p2name) \
-class name##Class \
-{ \
-public: \
-	ret __fastcall name(p1type p1name, p2type p2name); \
-	static ret (__fastcall name##Class::* name##_Actual)(p1type, p2type); \
-}; \
-ret (__fastcall name##Class::* name##Class::name##_Actual)(p1type, p2type) = NULL; \
-ret __fastcall name##Class::name(p1type p1name, p2type p2name)
-
-#define DETOUR_DECL_MEMBER3_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name) \
-class name##Class \
-{ \
-public: \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name); \
-	static ret (__fastcall name##Class::* name##_Actual)(p1type, p2type, p3type); \
-}; \
-ret (__fastcall name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type) = NULL; \
-ret __fastcall name##Class::name(p1type p1name, p2type p2name, p3type p3name)
-
-#define DETOUR_DECL_MEMBER4_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name) \
-class name##Class \
-{ \
-public: \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name, p4type p4name); \
-	static ret (__fastcall name##Class::* name##_Actual)(p1type, p2type, p3type, p4type); \
-}; \
-ret (__fastcall name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type) = NULL; \
-ret __fastcall name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name)
-
-#define DETOUR_DECL_MEMBER5_fastcall(name, ret, p1type, p1name, p2type, p2name, p3type, p3name, p4type, p4name, p5type, p5name) \
-class name##Class \
-{ \
-public: \
-	ret __fastcall name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name); \
-	static ret (__fastcall name##Class::* name##_Actual)(p1type, p2type, p3type, p4type, p5type); \
-}; \
-ret (__fastcall name##Class::* name##Class::name##_Actual)(p1type, p2type, p3type, p4type, p5type) = NULL; \
-ret __fastcall name##Class::name(p1type p1name, p2type p2name, p3type p3name, p4type p4name, p5type p5name)
 
 #define GET_MEMBER_CALLBACK(name) (void *)GetCodeAddress(&name##Class::name)
 #define GET_MEMBER_TRAMPOLINE(name) (void **)(&name##Class::name##_Actual)
@@ -319,6 +221,7 @@ public:
 
 protected:
 	CDetour(void *callbackfunction, void **trampoline, const char *signame);
+	CDetour(void*callbackfunction, void **trampoline, void *pAddress);
 
 	bool Init(ISourcePawnEngine *spengine, IGameConfig *gameconf);
 private:
@@ -391,6 +294,7 @@ public:
 	 * Note we changed the netadr_s reference into a void* to avoid needing to define the type
 	 */
 	static CDetour *CreateDetour(void *callbackfunction, void **trampoline, const char *signame);
+	static CDetour *CreateDetour(void *callbackfunction, void **trampoline, void *pAddress);
 
 	friend class CBlocker;
 	friend class CDetour;
@@ -399,37 +303,5 @@ private:
 	static ISourcePawnEngine *spengine;
 	static IGameConfig *gameconf;
 };
-
-#define DECL_DETOUR(name) \
-	CDetour *name##_Detour = nullptr;
-
-#define CREATE_DETOUR(name, signname, var) \
-	name##_Detour = DETOUR_CREATE_MEMBER(name, signname); \
-	if (name##_Detour != NULL) \
-	{ \
-		name##_Detour->EnableDetour(); \
-		var = true; \
-	} else { \
-		g_pSM->LogError(myself, "Failed to create " signname " detour, check error log.\n"); \
-		var = false; \
-	}
-
-#define CREATE_DETOUR_STATIC(name, signname, var) \
-	name##_Detour = DETOUR_CREATE_STATIC(name, signname); \
-	if (name##_Detour != NULL) \
-	{ \
-		name##_Detour->EnableDetour(); \
-		var = true; \
-	} else { \
-		g_pSM->LogError(myself, "Failed to create " signname " detour, check error log.\n"); \
-		var = false; \
-	}
-
-#define DESTROY_DETOUR(name) \
-	if (name##_Detour != nullptr) \
-{ \
-	name##_Detour->Destroy(); \
-	name##_Detour = nullptr; \
-}
 
 #endif // _INCLUDE_SOURCEMOD_DETOURS_H_

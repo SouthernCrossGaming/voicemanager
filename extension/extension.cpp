@@ -2,7 +2,7 @@
 #include "inetmessage.h"
 
 ConVar vm_enable("vm_enable", "1", FCVAR_NONE, "Enables voice manager");
-DECL_DETOUR(SV_BroadcastVoiceData);
+// DECL_DETOUR(SV_BroadcastVoiceData);
 
 VoiceManagerExt g_VoiceManager; // Global singleton for extension's main interface
 IGameConfig* g_pGameConf = nullptr;
@@ -38,6 +38,7 @@ void SendVoiceDataMsg(int fromClientSlot, IClient* pToClient, uint8_t* data, int
     pToClient->SendNetMsg(msg);
 };
 
+CDetour *broadcastVoiceData;
 DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
     if (!vm_enable.GetBool())
@@ -490,6 +491,8 @@ void VoiceManagerExt::SDK_OnAllLoaded()
 
 bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 {
+    printf("In SDK_OnLoad");
+
     sharesys->AddDependency(myself, "sdktools.ext", true, true);
     sharesys->AddDependency(myself, "bintools.ext", true, true);
     plsys->AddPluginsListener(this);
@@ -508,8 +511,16 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 
     CDetourManager::Init(smutils->GetScriptingEngine(), g_pGameConf);
 
-    bool bDetoursInited = false;
-    CREATE_DETOUR_STATIC(SV_BroadcastVoiceData, "SV_BroadcastVoiceData", bDetoursInited);
+    broadcastVoiceData = DETOUR_CREATE_STATIC(SV_BroadcastVoiceData, "SV_BroadcastVoiceData");
+    if (broadcastVoiceData)
+    {
+        broadcastVoiceData->EnableDetour();
+    }
+    else
+    {
+        printf("Failed to create BroadcastVoiceData detour");
+        return false;
+    }
 
     for (int i = 1; i <= playerhelpers->GetMaxClients(); i++)
     {
