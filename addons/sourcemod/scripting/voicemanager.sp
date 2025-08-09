@@ -5,7 +5,7 @@
 #include <sdktools>
 #include <clientprefs>
 
-#define PLUGIN_VERSION "1.0.2"
+#define PLUGIN_VERSION "1.0.3"
 #define VOICE_MANAGER_PREFIX "{green}[VOICE MANAGER]{default}"
 #define TABLE_NAME "voicemanager"
 #define STEAM_ID_BUF_SIZE 18
@@ -118,7 +118,7 @@ public void OnVoiceEnableChanged(ConVar convar, const char[] oldValue, const cha
 
 public void OnClientPostAdminCheck(int client)
 {
-    if (!g_Cvar_VoiceEnable.BoolValue)
+    if (!g_Cvar_VoiceEnable.BoolValue || !IsValidClient(client))
     {
         return;
     }
@@ -438,7 +438,7 @@ public int VoiceVolumeHandler(Menu menu, MenuAction action, int client, int para
 
             char adjuster[STEAM_ID_BUF_SIZE], adjusted[STEAM_ID_BUF_SIZE];
             GetClientAuthId(client, AuthId_SteamID64, adjuster, sizeof(adjuster));
-            GetClientAuthId(client, AuthId_SteamID64, adjusted, sizeof(adjusted));
+            GetClientAuthId(g_iSelection[client], AuthId_SteamID64, adjusted, sizeof(adjusted));
 
             char szQuery[511];
             if (level == -1)
@@ -527,7 +527,7 @@ public int GlobalVoiceVolumeHandler(Menu menu, MenuAction action, int client, in
 
 stock bool IsValidClient(int client)
 {
-    if (!client || client > MaxClients || client < 1 || !IsClientInGame(client))
+    if (!client || client > MaxClients || client < 1 || !IsClientInGame(client) || IsClientReplay(client))
     {
         return false;
     }
