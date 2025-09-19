@@ -262,7 +262,7 @@ class ExtensionConfig(object):
     cxx.cflags += ['/Oy-']
 
   def configure_linux(self, cxx):
-    cxx.defines += ['_LINUX', 'POSIX']
+    cxx.defines += ['LINUX','_LINUX', 'POSIX']
     cxx.linkflags += ['-Wl,--exclude-libs,ALL', '/usr/local/lib/libopus.a']
     if cxx.vendor == 'gcc':
       cxx.linkflags += ['-static-libgcc']
@@ -367,6 +367,8 @@ class ExtensionConfig(object):
         lib_folder = os.path.join(sdk.path, 'linux_sdk')
       elif sdk.name in ['sdk2013', 'bms']:
         lib_folder = os.path.join(sdk.path, 'lib', 'public', 'linux32')
+      elif sdk.name in  ['tf2']:
+        lib_folder = os.path.join(sdk.path, 'lib', 'public', 'linux')
       else:
         lib_folder = os.path.join(sdk.path, 'lib', 'linux')
     elif builder.target_platform == 'mac':
