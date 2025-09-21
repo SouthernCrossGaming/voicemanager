@@ -17,14 +17,16 @@
 
 extern ConVar vm_enable;
 
-struct ActiveOverride {
+struct ActiveOverride
+{
 	int client;
 	int level;
 };
 
-struct UserOverride {
+struct UserOverride
+{
 	uint64_t steamId;
-	int level;
+	int      level;
 };
 
 class VoiceManagerExt : public SDKExtension, public IConCommandBaseAccessor, public IPluginsListener
@@ -33,7 +35,7 @@ public:
 	virtual bool SDK_OnLoad(char* error, size_t maxlen, bool late);
 	virtual void SDK_OnAllLoaded();
 	virtual bool SDK_OnMetamodLoad(ISmmAPI* ismm, char* error, size_t maxlength, bool late);
-	bool RegisterConCommandBase(ConCommandBase* pCommand);
+	bool         RegisterConCommandBase(ConCommandBase* pCommand);
 };
 
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_

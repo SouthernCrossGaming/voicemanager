@@ -32,10 +32,10 @@
 #ifndef _INCLUDE_SOURCEMOD_EXTENSION_BASESDK_H_
 #define _INCLUDE_SOURCEMOD_EXTENSION_BASESDK_H_
 
- /**
-  * @file smsdk_ext.h
-  * @brief Contains wrappers for making Extensions easier to write.
-  */
+/**
+ * @file smsdk_ext.h
+ * @brief Contains wrappers for making Extensions easier to write.
+ */
 
 #include "smsdk_config.h"
 #include <IExtensionSys.h>
@@ -46,13 +46,13 @@
 #include "am-string.h"
 #if defined SMEXT_ENABLE_FORWARDSYS
 #include <IForwardSys.h>
-#endif //SMEXT_ENABLE_FORWARDSYS
+#endif // SMEXT_ENABLE_FORWARDSYS
 #if defined SMEXT_ENABLE_PLAYERHELPERS
 #include <IPlayerHelpers.h>
-#endif //SMEXT_ENABLE_PlAYERHELPERS
+#endif // SMEXT_ENABLE_PlAYERHELPERS
 #if defined SMEXT_ENABLE_DBMANAGER
 #include <IDBDriver.h>
-#endif //SMEXT_ENABLE_DBMANAGER
+#endif // SMEXT_ENABLE_DBMANAGER
 #if defined SMEXT_ENABLE_GAMECONF
 #include <IGameConfigs.h>
 #endif
@@ -100,7 +100,7 @@
 #include <ISmmPlugin.h>
 #ifndef META_NO_HL2SDK
 #include <eiface.h>
-#endif //META_NO_HL2SDK
+#endif // META_NO_HL2SDK
 #endif
 
 #if !defined METAMOD_PLAPI_VERSION
@@ -110,7 +110,7 @@
 using namespace SourceMod;
 using namespace SourcePawn;
 
-class SDKExtension:
+class SDKExtension :
 #if defined SMEXT_CONF_METAMOD
 	public ISmmPlugin,
 #endif
@@ -119,6 +119,7 @@ class SDKExtension:
 public:
 	/** Constructor */
 	SDKExtension();
+
 public:
 	/**
 	 * @brief This is called after the initial loading sequence has been processed.
@@ -153,6 +154,15 @@ public:
 
 #if defined SMEXT_CONF_METAMOD
 	/**
+	 * @brief Called when Metamod is requesting the extension (ISmmPlugin) interface.
+	 *
+	 * @param mvi      Struct that contains Metamod version, SourceHook version, Plugin version and Source Engine version.
+	 * @param mli      Struct that contains the library file name and path being loaded.
+	 * @return        The ISmmPzlugin interface.
+	 */
+	virtual METAMOD_PLUGIN* SDK_OnMetamodCreateInterface(const MetamodVersionInfo* mvi, const MetamodLoaderInfo* mli);
+
+	/**
 	 * @brief Called when Metamod is attached, before the extension version is called.
 	 *
 	 * @param error			Error buffer.
@@ -184,7 +194,7 @@ public:
 	virtual bool SDK_OnMetamodPauseChange(bool paused, char* error, size_t maxlength);
 #endif
 
-public: //IExtensionInterface
+public: // IExtensionInterface
 	virtual bool OnExtensionLoad(IExtension* me, IShareSys* sys, char* error, size_t maxlength, bool late);
 	virtual void OnExtensionUnload();
 	virtual void OnExtensionsAllLoaded();
@@ -217,7 +227,7 @@ public: //IExtensionInterface
 	/** Called after OnExtensionUnload, once dependencies have been dropped. */
 	virtual void OnDependenciesDropped();
 #if defined SMEXT_CONF_METAMOD
-public: //ISmmPlugin
+public: // ISmmPlugin
 	/** Called when the extension is attached to Metamod. */
 	virtual bool Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlength, bool late);
 	/** Returns the author to MM */
@@ -242,6 +252,7 @@ public: //ISmmPlugin
 	virtual bool Pause(char* error, size_t maxlength);
 	/** Called on unpause */
 	virtual bool Unpause(char* error, size_t maxlength);
+
 private:
 	bool m_SourceMMLoaded;
 	bool m_WeAreUnloaded;
@@ -250,31 +261,31 @@ private:
 };
 
 extern SDKExtension* g_pExtensionIface;
-extern IExtension* myself;
+extern IExtension*   myself;
 
-extern IShareSys* g_pShareSys;
-extern IShareSys* sharesys;				/* Note: Newer name */
+extern IShareSys*  g_pShareSys;
+extern IShareSys*  sharesys; /* Note: Newer name */
 extern ISourceMod* g_pSM;
-extern ISourceMod* smutils;				/* Note: Newer name */
+extern ISourceMod* smutils; /* Note: Newer name */
 
 /* Optional interfaces are below */
 #if defined SMEXT_ENABLE_FORWARDSYS
 extern IForwardManager* g_pForwards;
-extern IForwardManager* forwards;		/* Note: Newer name */
-#endif //SMEXT_ENABLE_FORWARDSYS
+extern IForwardManager* forwards; /* Note: Newer name */
+#endif                            // SMEXT_ENABLE_FORWARDSYS
 #if defined SMEXT_ENABLE_HANDLESYS
 extern IHandleSys* g_pHandleSys;
-extern IHandleSys* handlesys;			/* Note: Newer name */
-#endif //SMEXT_ENABLE_HANDLESYS
+extern IHandleSys* handlesys; /* Note: Newer name */
+#endif                        // SMEXT_ENABLE_HANDLESYS
 #if defined SMEXT_ENABLE_PLAYERHELPERS
 extern IPlayerManager* playerhelpers;
-#endif //SMEXT_ENABLE_PLAYERHELPERS
+#endif // SMEXT_ENABLE_PLAYERHELPERS
 #if defined SMEXT_ENABLE_DBMANAGER
 extern IDBManager* dbi;
-#endif //SMEXT_ENABLE_DBMANAGER
+#endif // SMEXT_ENABLE_DBMANAGER
 #if defined SMEXT_ENABLE_GAMECONF
 extern IGameConfigManager* gameconfs;
-#endif //SMEXT_ENABLE_DBMANAGER
+#endif // SMEXT_ENABLE_DBMANAGER
 #if defined SMEXT_ENABLE_MEMUTILS
 extern IMemoryUtils* memutils;
 #endif
@@ -317,41 +328,41 @@ PLUGIN_GLOBALVARS();
 #ifndef META_NO_HL2SDK
 extern IVEngineServer* engine;
 extern IServerGameDLL* gamedll;
-#endif //META_NO_HL2SDK
+#endif // META_NO_HL2SDK
 #endif
 
 /** Creates a SourceMod interface macro pair */
 #define SM_MKIFACE(name) SMINTERFACE_##name##_NAME, SMINTERFACE_##name##_VERSION
 /** Automates retrieving SourceMod interfaces */
-#define SM_GET_IFACE(prefix, addr) \
-	if (!g_pShareSys->RequestInterface(SM_MKIFACE(prefix), myself, (SMInterface **)&addr)) \
-	{ \
-		if (error != NULL && maxlength) \
-		{ \
+#define SM_GET_IFACE(prefix, addr)                                                                                       \
+	if (!g_pShareSys->RequestInterface(SM_MKIFACE(prefix), myself, (SMInterface**)&addr))                                \
+	{                                                                                                                    \
+		if (error != NULL && maxlength)                                                                                  \
+		{                                                                                                                \
 			size_t len = ke::SafeSprintf(error, maxlength, "Could not find interface: %s", SMINTERFACE_##prefix##_NAME); \
-			if (len >= maxlength) \
-			{ \
-				error[maxlength - 1] = '\0'; \
-			} \
-		} \
-		return false; \
+			if (len >= maxlength)                                                                                        \
+			{                                                                                                            \
+				error[maxlength - 1] = '\0';                                                                             \
+			}                                                                                                            \
+		}                                                                                                                \
+		return false;                                                                                                    \
 	}
 /** Automates retrieving SourceMod interfaces when needed outside of SDK_OnLoad() */
 #define SM_GET_LATE_IFACE(prefix, addr) \
-	g_pShareSys->RequestInterface(SM_MKIFACE(prefix), myself, (SMInterface **)&addr)
+	g_pShareSys->RequestInterface(SM_MKIFACE(prefix), myself, (SMInterface**)&addr)
 /** Validates a SourceMod interface pointer */
-#define SM_CHECK_IFACE(prefix, addr) \
-	if (!addr) \
-	{ \
-		if (error != NULL && maxlength) \
-		{ \
+#define SM_CHECK_IFACE(prefix, addr)                                                                                     \
+	if (!addr)                                                                                                           \
+	{                                                                                                                    \
+		if (error != NULL && maxlength)                                                                                  \
+		{                                                                                                                \
 			size_t len = ke::SafeSprintf(error, maxlength, "Could not find interface: %s", SMINTERFACE_##prefix##_NAME); \
-			if (len >= maxlength) \
-			{ \
-				error[maxlength - 1] = '\0'; \
-			} \
-		} \
-		return false; \
+			if (len >= maxlength)                                                                                        \
+			{                                                                                                            \
+				error[maxlength - 1] = '\0';                                                                             \
+			}                                                                                                            \
+		}                                                                                                                \
+		return false;                                                                                                    \
 	}
 
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_BASESDK_H_

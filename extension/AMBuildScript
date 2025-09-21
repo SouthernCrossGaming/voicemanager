@@ -407,8 +407,12 @@ class ExtensionConfig(object):
       libs = ['tier0', 'tier1', 'vstdlib', 'mathlib']
       if sdk.name in ['swarm', 'blade', 'insurgency', 'doi', 'csgo']:
         libs.append('interfaces')
+
       for lib in libs:
-        lib_path = os.path.join(sdk.path, 'lib', 'public', lib) + '.lib'
+        if sdk.name in ['tf2']:
+          lib_path = os.path.join(sdk.path, 'lib', 'public', 'x86', lib) + '.lib'
+        else:
+          lib_path = os.path.join(sdk.path, 'lib', 'public', lib) + '.lib'
         compiler.linkflags.append(compiler.Dep(lib_path))
 
     for library in dynamic_libs:
