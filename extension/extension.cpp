@@ -1,5 +1,6 @@
 #include "extension.h"
 #include "inetmessage.h"
+#include <sm_argbuffer.h>
 
 ConVar vm_enable("vm_enable", "1", FCVAR_NONE, "Enables voice manager");
 DECL_DETOUR(SV_BroadcastVoiceData);
@@ -15,6 +16,7 @@ SMEXT_LINK(&g_VoiceManager);
 IBinTools* g_pBinTools = nullptr;
 ISDKTools* g_pSDKTools = nullptr;
 IServer* g_pServer = nullptr;
+void* pAddress;
 
 struct VoiceOverride
 {
@@ -37,6 +39,34 @@ void SendVoiceDataMsg(int fromClientSlot, IClient* pToClient, uint8_t* data, int
     msg.m_DataOut = data;
     pToClient->SendNetMsg(msg);
 };
+
+bool IsHearingClient(IClient* toClient, int fromClient)
+{
+    static ICallWrapper *pWrapper = NULL;
+
+    if (!pWrapper)
+    {        
+        PassInfo pass[2];
+        pass[0].flags = PASSFLAG_BYVAL;
+        pass[0].size = sizeof(IClient*);
+        pass[0].type = PassType_Basic;
+        pass[1].flags = PASSFLAG_BYVAL;
+        pass[1].size = sizeof(int);
+        pass[1].type = PassType_Basic;
+        PassInfo ret;
+        ret.flags = PASSFLAG_BYVAL;
+        ret.size = sizeof(bool);
+        ret.type = PassType_Basic;
+        pWrapper = g_pBinTools->CreateCall(pAddress, CallConv_Cdecl, &ret, pass, 2);
+    }
+
+    ArgBuffer<IClient*, int> vstk((toClient - 1), fromClient);
+
+    bool isHearing;
+    pWrapper->Execute(vstk, &isHearing);
+
+    return isHearing;
+}
 
 DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes, uint8_t*, data, int64, xuid)
 {
@@ -73,7 +103,8 @@ DETOUR_DECL_STATIC4(SV_BroadcastVoiceData, void, IClient*, pClient, int, nBytes,
         }
 
         IClient* pToClient = g_pServer->GetClient(client - 1);
-        if (pToClient == nullptr || !pToClient->IsHearingClient(fromClientSlot))
+
+        if (pToClient == nullptr || !IsHearingClient(pToClient, fromClientSlot))
         {
             continue;
         }
@@ -510,6 +541,12 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 
     bool bDetoursInited = false;
     CREATE_DETOUR_STATIC(SV_BroadcastVoiceData, "SV_BroadcastVoiceData", bDetoursInited);
+
+    if (!g_pGameConf->GetMemSig("IsHearingClient", &pAddress))
+    {
+        smutils->LogError(myself, "IsHearingClient offset not defined");
+        return false;
+    }
 
     for (int i = 1; i <= playerhelpers->GetMaxClients(); i++)
     {

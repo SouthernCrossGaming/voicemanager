@@ -10,6 +10,12 @@
 				"windows"			"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x83\xEC\x50\x83\x78\x30"
 				"linux"				"@_Z21SV_BroadcastVoiceDataP7IClientiPcx"
 			}
+			"IsHearingClient"
+			{
+				"library"			"engine"
+				"windows"			"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x83\xEC\x50\x83\x78\x30"
+				"linux"				"@_ZNK11CGameClient15IsHearingClientEi"
+			}
 		}
 	}
 
