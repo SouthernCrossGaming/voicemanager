@@ -1,0 +1,90 @@
+# !IMPORTANT!
+# If you make changes to this file, make sure that .clang-format in client/of, server/of, and shared/of are updated in turn.
+# !IMPORTANT!
+
+BasedOnStyle: Microsoft
+
+Language: Cpp
+
+ColumnLimit: 0
+MaxEmptyLinesToKeep: 1
+FixNamespaceComments: false
+AllowShortCaseLabelsOnASingleLine: true
+PackConstructorInitializers: NextLine
+ConstructorInitializerIndentWidth: 4
+
+# Alignment
+AlignAfterOpenBracket: BlockIndent
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+
+# Braces
+AllowShortFunctionsOnASingleLine: true
+Cpp11BracedListStyle: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: true
+  AfterStruct: true
+  AfterFunction: true
+  AfterCaseLabel: true
+  AfterNamespace: true
+  SplitEmptyFunction: false
+
+# Indentation
+UseTab: AlignWithSpaces
+TabWidth: 4
+IndentWidth: 4
+PPIndentWidth: 0
+IndentPPDirectives: None
+AccessModifierOffset: -4
+IndentCaseLabels: true
+NamespaceIndentation: All
+ContinuationIndentWidth: 4
+
+# Include Sorting
+SortIncludes: Never
+
+# Pointer Alignment
+PointerAlignment: Left
+
+# Spaces
+SpacesInParens: Never
+
+# Macros
+MacroBlockBegin: "^\
+AI_BEGIN_CUSTOM_SCHEDULE_PROVIDER|\
+AI_BEGIN_CUSTOM_NPC|\
+BEGIN_BYTESWAP_DATADESC|\
+BEGIN_DATADESC|\
+BEGIN_NETWORK_TABLE|\
+BEGIN_SEND_TABLE|\
+BEGIN_SEND_TABLE_NOBASE|\
+BEGIN_SHADER_PARAMS|\
+BEGIN_SIMPLE_DATADESC|\
+BEGIN_PREDICTION_DATA|\
+IMPLEMENT_CLIENTCLASS_DT_NOBASE|\
+IMPLEMENT_CLIENTCLASS_DT|\
+IMPLEMENT_SERVERCLASS_ST_NOBASE|\
+IMPLEMENT_SERVERCLASS_ST|\
+MSL_FOREACH_GROUP_BEGIN|\
+MSL_FOREACH_SURFACE_IN_GROUP_BEGIN|\
+BEGIN_DMXELEMENT_UNPACK|\
+CLIENTEFFECT_REGISTER_BEGIN$"
+
+MacroBlockEnd: "^\
+AI_END_CUSTOM_SCHEDULE_PROVIDER|\
+AI_END_CUSTOM_NPC|\
+END_BYTESWAP_DATADESC|\
+END_NETWORK_TABLE|\
+END_SEND_TABLE|\
+END_DATADESC|\
+END_SHADER_PARAMS|\
+END_RECV_TABLE|\
+END_PREDICTION_DATA|\
+MSL_FOREACH_GROUP_END|\
+MSL_FOREACH_SURFACE_IN_GROUP_END|\
+END_DMXELEMENT_UNPACK|\
+CLIENTEFFECT_REGISTER_END|\
+CLIENTEFFECT_REGISTER_END_CONDITIONAL$"

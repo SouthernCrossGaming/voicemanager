@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:20.04
 
 RUN apt update
 RUN dpkg --add-architecture i386
