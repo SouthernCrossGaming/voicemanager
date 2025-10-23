@@ -1,7 +1,8 @@
 # Voice Manager
 
 <div align="center">
-  A sourcemod plugin and extension that allows players to individually modify the voice volume of other players. 
+  A sourcemod plugin and extension that allows players to individually modify the voice volume of other players.
+  Bugfixed by https://github.com/babasproke2 ... I experienced crashes with this plugin and may have located a fatal error in the VoiceVolumeHandler function. See line 441
   </br>
   </br>
   <h3><a href=https://youtu.be/5lFNonAkXDQ>View Demo on YouTube</a>
@@ -124,3 +125,4 @@ To setup C++ includes for VS Code, clone sourcemod, metamod, and the tf2 sdk. In
 
 # AlliedModders Thread
 https://forums.alliedmods.net/showthread.php?t=344276
+
