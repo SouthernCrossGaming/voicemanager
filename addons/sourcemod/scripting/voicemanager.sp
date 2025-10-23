@@ -14,7 +14,9 @@
 
 int g_iSelection[MAXPLAYERS+1] = {0};
 int g_iCookieSelection[MAXPLAYERS+1] = {-1};
-char g_sVolumeLevels[4][2] = { "<<", "<", ">", ">>" };
+char g_sVolumeLevels[][] = { "<<", "<", ">", ">>" };
+// Old : char g_sVolumeLevels[4][2] = { "<<", "<", ">", ">>" };
+// This doesn't compile, emptying the definition is how I feel like changing this
 
 char g_sDriver[64];
 
@@ -52,6 +54,8 @@ public void OnPluginStart()
     g_Cvar_AllowSelfOverride = CreateConVar("vm_allow_self", "0", "Allow players to override their own volume (recommended only for testing)");
 
     RegConsoleCmd("sm_vm", CommandBaseMenu);
+    RegConsoleCmd("sm_v", CommandBaseMenu); // Added more aliases as a nitpick
+    RegConsoleCmd("sm_voice", CommandBaseMenu);
     RegConsoleCmd("sm_voicemanager", CommandBaseMenu);
     RegConsoleCmd("sm_vmclear", Command_ClearClientOverrides);
 
@@ -538,3 +542,4 @@ stock bool IsValidClient(int client)
     return true;
 
 }
+
