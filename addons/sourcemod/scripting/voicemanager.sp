@@ -438,7 +438,10 @@ public int VoiceVolumeHandler(Menu menu, MenuAction action, int client, int para
 
             char adjuster[STEAM_ID_BUF_SIZE], adjusted[STEAM_ID_BUF_SIZE];
             GetClientAuthId(client, AuthId_SteamID64, adjuster, sizeof(adjuster));
-            GetClientAuthId(client, AuthId_SteamID64, adjusted, sizeof(adjusted));
+            GetClientAuthId(client, g_iSelection[client], adjusted, sizeof(adjusted));
+            // Old: GetClientAuthId(client, AuthId_SteamID64, adjusted, sizeof(adjusted));
+            // New: Puts the selection into the DB rather than the same two SteamIDs
+            // This likely lead to the crashes I experienced
 
             char szQuery[511];
             if (level == -1)
@@ -533,4 +536,5 @@ stock bool IsValidClient(int client)
     }
 
     return true;
+
 }
