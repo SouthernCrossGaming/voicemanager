@@ -27,6 +27,6 @@ RUN apt install -y \
     libopus-dev:i386
 
 RUN git clone https://github.com/xiph/opus.git -b v1.3.1 --depth 1
-RUN cd opus && ./autogen.sh && ./configure CFLAGS="-m32 -g -O2" LDFLAGS=-m32 && make && make install && cd ..
+RUN cd opus && ./autogen.sh && ./configure CFLAGS="-m64 -fPIC -g -O2" LDFLAGS=-m64 && make && make install && cd ..
 
 RUN pip install ./ambuild
