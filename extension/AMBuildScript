@@ -261,7 +261,7 @@ class ExtensionConfig(object):
     cxx.cflags += ['/Oy-']
 
   def configure_linux(self, cxx):
-    cxx.defines += ['_LINUX', 'POSIX']
+    cxx.defines += ['LINUX', '_LINUX', 'POSIX']
     cxx.linkflags += ['-Wl,--exclude-libs,ALL', '/usr/local/lib/libopus.a']
     if cxx.vendor == 'gcc':
       cxx.linkflags += ['-static-libgcc']

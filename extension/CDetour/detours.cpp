@@ -35,6 +35,11 @@
 ISourcePawnEngine *CDetourManager::spengine = NULL;
 IGameConfig *CDetourManager::gameconf = NULL;
 
+#if defined(_WIN64) || defined(__x86_64__)
+// push imm32 + mov [rsp+4], imm32 + ret
+#define X64_ABS_SIZE 14
+#endif
+
 // Push 64-bit value onto the stack using two instructions.
 //
 // Pushing 0xF00DF00DF00DF00D:
