@@ -27,7 +27,7 @@ std::map<int, std::map<int, VoiceOverride>>   g_activeOverrides;
 std::map<uint64_t, std::vector<UserOverride>> m_userOverrides;
 std::map<uint64_t, int>                       m_userGlobalOverrides;
 
-VoiceManagerClientState g_voiceManagerClientStates[MAXPLAYERS + 1];
+VoiceManagerClientState g_voiceManagerClientStates[SM_MAXPLAYERS + 1];
 
 void SendVoiceDataMsg(int fromClientSlot, IClient* pToClient, uint8_t* data, int nBytes, int64 xuid)
 {
