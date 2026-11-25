@@ -14,7 +14,9 @@ VoiceManager::VoiceManager(opus_int32 gain)
 
 uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const uint8_t* data, int* nBytesOut)
 {
-    *nBytesOut = 0;
+    // early returns in this function return `originalVoiceData`,
+    // so set `*nBytesOut` to `nBytes` to indicate the original length
+    *nBytesOut = nBytes;
     m_vecDecodedChunks.clear();
 
     uint8_t* originalVoiceData = new uint8_t[MAX_PACKET_SIZE]();
@@ -31,12 +33,20 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
         return originalVoiceData;
     }
 
-    int16_t encPos = STEAM_HEADER_SIZE + 2;
+    int encPos = STEAM_HEADER_SIZE + 2;
 
     for (DecodedChunk decoded : m_vecDecodedChunks)
     {
         EncodedChunk encoded = OpusEncode(decoded);
         if (encoded.data.size() <= 0)
+        {
+            delete[] pVoiceDataResult;
+            return originalVoiceData;
+        }
+
+        // Re-encoded chunks can be bigger than the originals,
+        // make sure this one and the crc still fit
+        if (encPos + 4 + encoded.data.size() + sizeof(uint32_t) > MAX_PACKET_SIZE)
         {
             delete[] pVoiceDataResult;
             return originalVoiceData;
@@ -150,18 +160,33 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
 
             int tpos = pos;
             int maxpos = tpos + dataSize;
+            if (maxpos > dataLen)
+            {
+                smutils->LogError(myself, "Voice data extends past end of the packet");
+                return;
+            }
+
             while (tpos <= (maxpos - 4))
             {
                 EncodedChunk encodedChunk;
                 int16_t encodedSize = *((int16_t*)&bytes[tpos]);
-                encodedChunk.data = std::vector<uint8_t>(encodedSize);
                 tpos += 2;
 
                 if (encodedSize <= 0)
                 {
                     smutils->LogError(myself, "Found a chunk with a size <= 0");
+                    m_vecDecodedChunks.clear();
                     return;
                 }
+
+                if (tpos + 2 + encodedSize > maxpos)
+                {
+                    smutils->LogError(myself, "Found a chunk with a size larger than remaining data");
+                    m_vecDecodedChunks.clear();
+                    return;
+                }
+
+                encodedChunk.data = std::vector<uint8_t>(encodedSize);
 
                 encodedChunk.index = *((int16_t*)&bytes[tpos]);
                 tpos += 2;
@@ -174,6 +199,8 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
                 DecodedChunk decodedChunk = this->OpusDecode(encodedChunk);
                 if (decodedChunk.data.size() <= 0)
                 {
+                    // send the whole packet unmodified rather than re-encoding only part of it
+                    m_vecDecodedChunks.clear();
                     return;
                 }
 
@@ -235,6 +262,12 @@ bool VoiceManager::InitOpusEncoder(opus_int32 rate)
     {
         int err;
         m_Opus_Encoder = opus_encoder_create(rate, CHANNELS, APPLICATION, &err);
+        if (err < 0)
+        {
+            smutils->LogError(myself, "Something went wrong with creating opus encoder: %i", err);
+            return false;
+        }
+
         err = opus_encoder_ctl(m_Opus_Encoder, OPUS_RESET_STATE);
 
         if (err < 0)
@@ -292,6 +325,7 @@ EncodedChunk VoiceManager::OpusEncode(DecodedChunk decoded)
     if (compressedBytes < 0)
     {
         smutils->LogError(myself, "Opus Encoder Failed with err: %s", ErrorToString(compressedBytes));
+        return encoded;
     }
 
     encoded.data = std::vector<uint8_t>(compressedBytes);
@@ -309,10 +343,18 @@ DecodedChunk VoiceManager::OpusDecode(EncodedChunk encoded)
     decoded.index = encoded.index;
     int16_t x[MAX_PACKET_SIZE];
 
+    // opus decoder is created after a sample rate payload,
+    // but clients can send opus data before one is received
+    if (!m_Opus_Decoder)
+    {
+        return decoded;
+    }
+
     int samples = opus_decode(m_Opus_Decoder, encoded.data.data(), encoded.data.size(), x, MAX_FRAMEBUFFER_SAMPLES, 0);
     if (samples < 0)
     {
         smutils->LogError(myself, "Opus Decoder Failed: %s", ErrorToString(samples));
+        return decoded;
     }
 
     decoded.data = std::vector<int16_t>(samples);

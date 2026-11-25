@@ -33,6 +33,7 @@ class VoiceManagerExt : public SDKExtension, public IConCommandBaseAccessor, pub
 {
 public:
 	virtual bool SDK_OnLoad(char* error, size_t maxlen, bool late);
+	virtual void SDK_OnUnload();
 	virtual void SDK_OnAllLoaded();
 	virtual bool SDK_OnMetamodLoad(ISmmAPI* ismm, char* error, size_t maxlength, bool late);
 	bool         RegisterConCommandBase(ConCommandBase* pCommand);
