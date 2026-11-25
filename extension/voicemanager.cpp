@@ -343,6 +343,13 @@ DecodedChunk VoiceManager::OpusDecode(EncodedChunk encoded)
     decoded.index = encoded.index;
     int16_t x[MAX_PACKET_SIZE];
 
+    // opus decoder is created after a sample rate payload,
+    // but clients can send opus data before one is received
+    if (!m_Opus_Decoder)
+    {
+        return decoded;
+    }
+
     int samples = opus_decode(m_Opus_Decoder, encoded.data.data(), encoded.data.size(), x, MAX_FRAMEBUFFER_SAMPLES, 0);
     if (samples < 0)
     {
