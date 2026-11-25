@@ -559,6 +559,14 @@ bool VoiceManagerExt::SDK_OnLoad(char* error, size_t maxlength, bool late)
 	return true;
 }
 
+void VoiceManagerExt::SDK_OnUnload()
+{
+	DESTROY_DETOUR(SV_BroadcastVoiceData);
+	plsys->RemovePluginsListener(this);
+	gameconfs->CloseGameConfigFile(g_pGameConf);
+	g_pGameConf = nullptr;
+}
+
 bool VoiceManagerExt::RegisterConCommandBase(ConCommandBase* pCommand)
 {
 	META_REGCVAR(pCommand);
