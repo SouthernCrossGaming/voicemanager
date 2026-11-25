@@ -323,6 +323,7 @@ EncodedChunk VoiceManager::OpusEncode(DecodedChunk decoded)
     if (compressedBytes < 0)
     {
         smutils->LogError(myself, "Opus Encoder Failed with err: %s", ErrorToString(compressedBytes));
+        return encoded;
     }
 
     encoded.data = std::vector<uint8_t>(compressedBytes);
