@@ -31,7 +31,7 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
         return originalVoiceData;
     }
 
-    int16_t encPos = STEAM_HEADER_SIZE + 2;
+    int encPos = STEAM_HEADER_SIZE + 2;
 
     for (DecodedChunk decoded : m_vecDecodedChunks)
     {
