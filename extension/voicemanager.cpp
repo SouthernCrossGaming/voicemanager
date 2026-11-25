@@ -150,18 +150,33 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
 
             int tpos = pos;
             int maxpos = tpos + dataSize;
+            if (maxpos > dataLen)
+            {
+                smutils->LogError(myself, "Voice data extends past end of the packet");
+                return;
+            }
+
             while (tpos <= (maxpos - 4))
             {
                 EncodedChunk encodedChunk;
                 int16_t encodedSize = *((int16_t*)&bytes[tpos]);
-                encodedChunk.data = std::vector<uint8_t>(encodedSize);
                 tpos += 2;
 
                 if (encodedSize <= 0)
                 {
                     smutils->LogError(myself, "Found a chunk with a size <= 0");
+                    m_vecDecodedChunks.clear();
                     return;
                 }
+
+                if (tpos + 2 + encodedSize > maxpos)
+                {
+                    smutils->LogError(myself, "Found a chunk with a size larger than remaining data");
+                    m_vecDecodedChunks.clear();
+                    return;
+                }
+
+                encodedChunk.data = std::vector<uint8_t>(encodedSize);
 
                 encodedChunk.index = *((int16_t*)&bytes[tpos]);
                 tpos += 2;
@@ -174,6 +189,8 @@ void VoiceManager::ParseSteamVoicePacket(uint8_t* bytes, int numBytes)
                 DecodedChunk decodedChunk = this->OpusDecode(encodedChunk);
                 if (decodedChunk.data.size() <= 0)
                 {
+                    // send the whole packet unmodified rather than re-encoding only part of it
+                    m_vecDecodedChunks.clear();
                     return;
                 }
 
