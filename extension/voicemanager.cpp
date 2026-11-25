@@ -14,7 +14,9 @@ VoiceManager::VoiceManager(opus_int32 gain)
 
 uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const uint8_t* data, int* nBytesOut)
 {
-    *nBytesOut = 0;
+    // early returns in this function return `originalVoiceData`,
+    // so set `*nBytesOut` to `nBytes` to indicate the original length
+    *nBytesOut = nBytes;
     m_vecDecodedChunks.clear();
 
     uint8_t* originalVoiceData = new uint8_t[MAX_PACKET_SIZE]();
