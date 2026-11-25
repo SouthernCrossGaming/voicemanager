@@ -393,6 +393,13 @@ static cell_t OnPlayerAdjustVolume(IPluginContext* pContext, const cell_t* param
 	int adjusted = params[2];
 	int volume = params[3];
 
+	// Check volume is in range, negatives are checked later
+	// Anything past the last level is invalid
+	if (volume >= MAX_LEVELS)
+	{
+		return false;
+	}
+
 	uint64_t adjusterSteamId = GetClientSteamId(adjuster);
 	uint64_t adjustedSteamId = GetClientSteamId(adjusted);
 	if (adjusterSteamId <= 0 || adjustedSteamId <= 0)
@@ -467,6 +474,14 @@ static cell_t OnPlayerGlobalAdjust(IPluginContext* pContext, const cell_t* param
 
 	int adjuster = params[1];
 	int volume = params[2];
+
+	// Check volume is in range, negatives are checked later
+	// Anything past the last level is invalid
+	// This comes from a public cookie, so players can set it to anything with sm_cookies
+	if (volume >= MAX_LEVELS)
+	{
+		return false;
+	}
 
 	uint64_t adjusterSteamId = GetClientSteamId(adjuster);
 	if (adjusterSteamId <= 0)
