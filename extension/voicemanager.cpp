@@ -347,6 +347,7 @@ DecodedChunk VoiceManager::OpusDecode(EncodedChunk encoded)
     if (samples < 0)
     {
         smutils->LogError(myself, "Opus Decoder Failed: %s", ErrorToString(samples));
+        return decoded;
     }
 
     decoded.data = std::vector<int16_t>(samples);
