@@ -42,6 +42,14 @@ uint8_t* VoiceManager::OnBroadcastVoiceData(IClient* pClient, int nBytes, const 
             return originalVoiceData;
         }
 
+        // Re-encoded chunks can be bigger than the originals,
+        // make sure this one and the crc still fit
+        if (encPos + 4 + encoded.data.size() + sizeof(uint32_t) > MAX_PACKET_SIZE)
+        {
+            delete[] pVoiceDataResult;
+            return originalVoiceData;
+        }
+
         auto encodedSize = encoded.data.size();
         char* pEncodedSize = (char*)&encodedSize;
         std::copy(pEncodedSize, pEncodedSize + sizeof(int16_t), &pVoiceDataResult[encPos]);
