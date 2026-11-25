@@ -469,7 +469,7 @@ static cell_t OnPlayerGlobalAdjust(IPluginContext* pContext, const cell_t* param
 	int volume = params[2];
 
 	uint64_t adjusterSteamId = GetClientSteamId(adjuster);
-	if (adjusterSteamId <= 0 || adjusterSteamId <= 0)
+	if (adjusterSteamId <= 0)
 	{
 		return false;
 	}
