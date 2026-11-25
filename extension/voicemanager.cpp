@@ -260,6 +260,12 @@ bool VoiceManager::InitOpusEncoder(opus_int32 rate)
     {
         int err;
         m_Opus_Encoder = opus_encoder_create(rate, CHANNELS, APPLICATION, &err);
+        if (err < 0)
+        {
+            smutils->LogError(myself, "Something went wrong with creating opus encoder: %i", err);
+            return false;
+        }
+
         err = opus_encoder_ctl(m_Opus_Encoder, OPUS_RESET_STATE);
 
         if (err < 0)
