@@ -337,13 +337,19 @@ static cell_t LoadPlayerAdjustment(IPluginContext* pContext, const cell_t* param
 	int volume = params[3];
 
 	// If the volume is invalid, return false
-	if (volume < 0)
+	if (volume < 0 || volume >= MAX_LEVELS)
+	{
+		return false;
+	}
+
+	char*    adjustedSteamIdEnd;
+	uint64_t adjustedSteamId = strtoull(adjustedSteamIdString, &adjustedSteamIdEnd, 10);
+	if (adjustedSteamIdEnd == adjustedSteamIdString || *adjustedSteamIdEnd != '\0')
 	{
 		return false;
 	}
 
 	uint64_t adjusterSteamId = GetClientSteamId(adjuster);
-	uint64_t adjustedSteamId = std::stoull(adjustedSteamIdString);
 	if (adjusterSteamId <= 0 || adjustedSteamId <= 0)
 	{
 		return false;
